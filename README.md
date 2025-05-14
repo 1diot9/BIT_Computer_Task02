@@ -1,5 +1,5 @@
 # qshifter (Quick Shifter)
 
-> [!TODO]
+> [!NOTE]
 >
 > qshifter

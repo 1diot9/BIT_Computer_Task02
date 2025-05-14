@@ -11,19 +11,19 @@ class QuickShifter:
         # TODO: word_list错误处理
         self.word_list = string.split(" ")
 
+        self.shifts = [x for x in self]
+        self.shifts.sort()
+
     def __getitem__(self, index) -> str:
-        return self.word_list[index]
+        return self.shifts[index]
 
     def __iter__(self):
         return QuickShifterIter(self.word_list)
 
-    def list(self) -> list[str]:
-        return self.word_list
-
     def __len__(self) -> int:
-        return len(self.word_list)
+        return len(self.shifts)
 
-    # TODO: 排序/生成序列相关方法
+    # TODO: 更多相关方法(采用list初始化，多组字符串处理)
 
 
 class QuickShifterIter:
@@ -41,12 +41,12 @@ class QuickShifterIter:
     def __iter__(self):
         return self
 
-    def __next__(self) -> list[str]:
+    def __next__(self) -> str:
         if self.count >= self.len:
             raise StopIteration
         self.queue.append(self.queue.pop(0))
         self.count += 1
-        return self.queue
+        return " ".join(self.queue)
 
 
 if __name__ == "__main__":
@@ -54,8 +54,8 @@ if __name__ == "__main__":
     tst = QuickShifter("A simple test string")
     for i in tst:
         print(i)
+
     print(tst.string)
-    res = [x.copy() for x in tst]
-    res.sort()
-    for i in res:
-        print(i)
+    print(tst.word_list)
+
+    print(tst.shifts)
