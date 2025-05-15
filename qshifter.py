@@ -1,15 +1,43 @@
 from qshifter import QuickShifter
 import argparse
 
+RED = "\033[01;31m"
+GREEN = "\033[01;32m"
+YELLOW = "\033[01;33m"
+BLUE = "\033[01;34m"
 
-banner: str = """\
- ██████╗ ███████╗██╗  ██╗██╗███████╗████████╗███████╗██████╗ 
-██╔═══██╗██╔════╝██║  ██║██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗
-██║   ██║███████╗███████║██║█████╗     ██║   █████╗  ██████╔╝
-██║▄▄ ██║╚════██║██╔══██║██║██╔══╝     ██║   ██╔══╝  ██╔══██╗
-╚██████╔╝███████║██║  ██║██║██║        ██║   ███████╗██║  ██║
- ╚══▀▀═╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝        ╚═╝   ╚══════╝╚═╝  ╚═╝
-"""
+END = "\033[0m"
+
+
+def color(string: str, color: str):
+    return color + string + END
+
+
+banner: str = color(
+    """\
+            _     _  ___
+           | |   (_)/ __)_
+  ____  ___| | _  _| |__| |_  ____  ____   v 0.1.0
+ / _  |/___) || \\| |  __)  _)/ _  )/ ___)
+| | | |___ | | | | | |  | |_( (/ /| |
+ \\_|| (___/|_| |_|_|_|   \\___)____)_|
+    |_|
+""",
+    BLUE,
+)
+
+
+def interactive() -> bool:
+    input_string: str = ""
+    try:
+        input_string = input(color("> ", RED))
+        shifter = QuickShifter(input_string)
+        shifter.show()
+    except EOFError:
+        return False
+    except KeyboardInterrupt:
+        return False
+    return input_string != "exit"
 
 
 if __name__ == "__main__":
@@ -27,17 +55,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # TODO: 增加文件处理功能(-f)
+
+    # TODO: 增加详细信息功能(-v)
+
     if args.input is not None:
         shifter = QuickShifter(args.input)
-        for shift in shifter.shifts:
-            print(shift)
+        shifter.show()
     elif args.console:
         print(banner)
-        while True:
-            input_string = input("> ")
-            shifter = QuickShifter(input_string)
-            for shift in shifter.shifts:
-                print(shift)
+        print(parser.description)
+        while interactive():
+            pass
     elif args.server:
         print("enter server mode")
         raise NotImplementedError

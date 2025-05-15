@@ -23,6 +23,10 @@ class QuickShifter:
     def __len__(self) -> int:
         return len(self.shifts)
 
+    def show(self):
+        for shift in self.shifts:
+            print(shift)
+
     # TODO: 更多相关方法(采用list初始化，多组字符串处理)
 
 
