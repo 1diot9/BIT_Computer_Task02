@@ -1,49 +1,44 @@
-class QuickShifter:
-    """QuickShifter类
-    通过迭代器来产生所有需要的序列
-
-    :param string: 给定字符串
-    """
-
-    def __init__(self, string: str) -> None:
-        self.string = string
-
-        # TODO: word_list错误处理
-        self.word_list = string.split(" ")
-
-        self.shifts = [x for x in self]
-        self.shifts.sort()
-
-    def __getitem__(self, index) -> str:
-        return self.shifts[index]
-
-    def __iter__(self):
-        return QuickShifterIter(self.word_list)
-
-    def __len__(self) -> int:
-        return len(self.shifts)
-
-    # TODO: 更多相关方法(采用list初始化，多组字符串处理)
+from qshifter import QuickShifter
+import argparse
 
 
-class QuickShifterIter:
-    """QuickShifter类专用迭代器
-    不要在别的类调用/单独调用
+banner: str = """\
+ ██████╗ ███████╗██╗  ██╗██╗███████╗████████╗███████╗██████╗ 
+██╔═══██╗██╔════╝██║  ██║██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗
+██║   ██║███████╗███████║██║█████╗     ██║   █████╗  ██████╔╝
+██║▄▄ ██║╚════██║██╔══██║██║██╔══╝     ██║   ██╔══╝  ██╔══██╗
+╚██████╔╝███████║██║  ██║██║██║        ██║   ███████╗██║  ██║
+ ╚══▀▀═╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝        ╚═╝   ╚══════╝╚═╝  ╚═╝
+"""
 
-    :param queue: 给定单词序列
-    """
 
-    def __init__(self, queue: list[str]) -> None:
-        self.queue = queue
-        self.len = len(queue)
-        self.count = 0
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="将输入的字符串按单词循环移位")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-p", "--input", type=str, help="需要循环移位的字符串")
+    group.add_argument(
+        "-i", "--console", action="store_true", help="进入命令行交互模式"
+    )
+    group.add_argument(
+        "-s",
+        "--server",
+        action="store_true",
+        help="进入服务器模式，在网页中交互",
+    )
+    args = parser.parse_args()
 
-    def __iter__(self):
-        return self
-
-    def __next__(self) -> str:
-        if self.count >= self.len:
-            raise StopIteration
-        self.queue.append(self.queue.pop(0))
-        self.count += 1
-        return " ".join(self.queue)
+    if args.input is not None:
+        shifter = QuickShifter(args.input)
+        for shift in shifter.shifts:
+            print(shift)
+    elif args.console:
+        print(banner)
+        while True:
+            input_string = input("> ")
+            shifter = QuickShifter(input_string)
+            for shift in shifter.shifts:
+                print(shift)
+    elif args.server:
+        print("enter server mode")
+        raise NotImplementedError
+        # TODO: 网页实现
