@@ -1,6 +1,17 @@
 from qshifter import QuickShifter
 import argparse
 
+
+banner: str = """\
+ ██████╗ ███████╗██╗  ██╗██╗███████╗████████╗███████╗██████╗ 
+██╔═══██╗██╔════╝██║  ██║██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗
+██║   ██║███████╗███████║██║█████╗     ██║   █████╗  ██████╔╝
+██║▄▄ ██║╚════██║██╔══██║██║██╔══╝     ██║   ██╔══╝  ██╔══██╗
+╚██████╔╝███████║██║  ██║██║██║        ██║   ███████╗██║  ██║
+ ╚══▀▀═╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝        ╚═╝   ╚══════╝╚═╝  ╚═╝
+"""
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="将输入的字符串按单词循环移位")
     group = parser.add_mutually_exclusive_group()
@@ -15,4 +26,19 @@ if __name__ == "__main__":
         help="进入服务器模式，在网页中交互",
     )
     args = parser.parse_args()
-    pass
+
+    if args.input is not None:
+        shifter = QuickShifter(args.input)
+        for shift in shifter.shifts:
+            print(shift)
+    elif args.console:
+        print(banner)
+        while True:
+            input_string = input("> ")
+            shifter = QuickShifter(input_string)
+            for shift in shifter.shifts:
+                print(shift)
+    elif args.server:
+        print("enter server mode")
+        raise NotImplementedError
+        # TODO: 网页实现
