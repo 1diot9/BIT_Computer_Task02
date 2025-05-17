@@ -1,4 +1,5 @@
 from qshifter import QuickShifter
+from app import app
 import argparse
 
 RED = "\033[01;31m"
@@ -13,7 +14,7 @@ def color(string: str, color: str):
     return color + string + END
 
 
-banner: str = color(
+BANNER: str = color(
     """\
             _     _  ___
            | |   (_)/ __)_
@@ -26,11 +27,13 @@ banner: str = color(
     BLUE,
 )
 
+PROMPT = color("qs> ", RED)
+
 
 def interactive() -> bool:
     input_string: str = ""
     try:
-        input_string = input(color("> ", RED))
+        input_string = input(PROMPT)
         shifter = QuickShifter(input_string)
         shifter.show()
     except EOFError:
@@ -63,11 +66,11 @@ if __name__ == "__main__":
         shifter = QuickShifter(args.input)
         shifter.show()
     elif args.console:
-        print(banner)
+        print(BANNER)
         print(parser.description)
+        print("请按CTRL+C/CTRL+D退出")
         while interactive():
             pass
     elif args.server:
         print("enter server mode")
-        raise NotImplementedError
-        # TODO: 网页实现
+        app.run()
