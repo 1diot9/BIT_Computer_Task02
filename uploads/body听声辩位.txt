@@ -1,0 +1,25 @@
+body   	听声辩位
+container		西南方				h1    东北方
+p			东方					script标签   探本穷源
+input			东南方
+button		北方
+button:hover	西方
+
+
+body
+contain
+p
+button
+hover
+input
+
+
+
+
+contain  p  input  button  hover  script
+contain  input  button  hover  h1  p
+contain  h1  p  input  button  hover
+h1 contain p input button hover
+input p h1 contain button hover
+input p contain h1 button hover
+
