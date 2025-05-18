@@ -8,12 +8,12 @@ class QuickShifter:
     def __init__(self, string: str) -> None:
         self.string = string
 
-        # TODO: word_list错误处理
         self.word_list = string.split(" ")
 
         self.shifts = [x for x in self]
 
         """
+        产生所有的移位序列
         循环左移之后异或排序大小写，只对26个英文字母大小写生效
 
         例：
@@ -37,7 +37,7 @@ class QuickShifter:
 
         异或1之后：
         rol(ord('a'), 3) ^ 1 == 0b0000_1010
-        rol(ord('A'), 3) ^ 1 == 0b0000_1001
+        rol(ord('A'), 3) ^ 1 == 0b0000_1011
         rol(ord('b'), 3) ^ 1 == 0b0001_0010
         rol(ord('B'), 3) ^ 1 == 0b0001_0011
         rol(ord('p'), 3) ^ 1 == 0b1000_0010
