@@ -1,3 +1,6 @@
+from typing import Self
+
+
 class QuickShifter:
     """QuickShifter类
     通过迭代器来产生所有需要的序列
@@ -10,7 +13,7 @@ class QuickShifter:
 
         self.word_list = string.split(" ")
 
-        self.shifts = [x for x in self]
+        self.shifts: list[str] = [x for x in self]
 
         """
         产生所有的移位序列
@@ -62,11 +65,51 @@ class QuickShifter:
     def __len__(self) -> int:
         return len(self.shifts)
 
+    #! TODO: 详细模式输出/统计
     def show(self):
         for shift in self.shifts:
             print(shift)
 
-    # TODO: 更多相关方法(采用list初始化，多组字符串处理)
+
+class QuickShifterLines:
+    """QuickShifterLines类
+    用于处理多行输入的循环移位序列
+    内部调用QuickShifer类进行处理
+
+    :param string: 给定多行字符串
+    """
+
+    def __init__(self, str_list: list[str]) -> None:
+        self.lines = str_list
+
+        self.line_shifts: list[list[str]] = []
+
+        for line in self.lines:
+            line_qshifter = QuickShifter(line)
+            self.line_shifts.append(line_qshifter.shifts)
+
+    @classmethod
+    def from_str(cls, string: str) -> Self:
+        return cls(string.split("\n"))
+
+    def __getitem__(self, index) -> str:
+        return self.line_shifts[index]
+
+    def __iter__(self):
+        return self.line_shifts.__iter__()
+
+    def __len__(self) -> int:
+        return len(self.line_shifts)
+
+    #! TODO: 详细模式输出/统计
+    def show(self, index: int):
+        for shift in self.line_shifts[index]:
+            print(shift)
+
+    def show_all(self):
+        for line in range(self.__len__()):
+            self.show(line)
+            print()
 
 
 class QuickShifterIter:

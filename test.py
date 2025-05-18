@@ -2,6 +2,8 @@ from qshifter import QuickShifter
 from color import *
 from functools import wraps
 
+import qshifter
+
 
 def test(func):
     """装饰器test
@@ -102,6 +104,10 @@ def test_outtest():
 
 # TEST: 测试部分
 if __name__ == "__main__":
+    tst = qshifter.QuickShifterLines(
+        ["A a B b", "Another yet new string", "Once upon a time", "It is my shift now"]
+    )
+    tst.show_all()
 
     # TEST: 运行所有测试
     qshifer_test = QshifterTest([test_outtest])
