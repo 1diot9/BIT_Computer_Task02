@@ -12,7 +12,39 @@ class QuickShifter:
         self.word_list = string.split(" ")
 
         self.shifts = [x for x in self]
-        self.shifts.sort()
+
+        """
+        循环右移之后异或排序大小写，只对26个英文字母大小写生效
+
+        例：
+        ord('a') == 0b0110_0001
+        ord('A') == 0b0100_0001
+        ord('b') == 0b0110_0010
+        ord('B') == 0b0110_0010
+
+        循环右移4位后：
+        ror(ord('a'), 4) == 0b0001_0110
+        ror(ord('A'), 4) == 0b0001_0100
+        ror(ord('b'), 4) == 0b0010_0110
+        ror(ord('B'), 4) == 0b0010_0100
+        
+        此时满足 A < a < B < b，排序结果是A a B b
+        为此我们要转换一下同一个字母大小写的大小关系
+
+        异或2之后：
+        ror(ord('a'), 4) ^ 2 == 0b0001_0100
+        ror(ord('A'), 4) ^ 2 == 0b0001_0110
+        ror(ord('b'), 4) ^ 2 == 0b0010_0100
+        ror(ord('B'), 4) ^ 2 == 0b0010_0110
+
+        此时满足 a < A < b < B，符合题意
+        """
+        # WARN: 此举会破坏除拉丁字母之外的ASCII字符的大小关系
+        self.shifts.sort(
+            key=lambda x: (((ord(x[0]) << 4) | (ord(x[0]) >> 4)) & 0xFF) ^ 0x2
+            if x[0].isalpha()
+            else ord(x[0])
+        )
 
     def __getitem__(self, index) -> str:
         return self.shifts[index]
