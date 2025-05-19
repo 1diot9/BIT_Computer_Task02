@@ -1,4 +1,5 @@
 from typing import Self
+from collections import deque
 
 
 class QuickShifter:
@@ -51,9 +52,14 @@ class QuickShifter:
         # NOTE: 如果仅循环移位4位，会导致字母p ~ z与a ~ o的大小关系出现问题
         # WARN: 此举会破坏除拉丁字母之外的ASCII字符的大小关系
         self.shifts.sort(
-            key=lambda x: (((ord(x[0]) << 3) | (ord(x[0]) >> 5)) & 0xFF) ^ 0x1
-            if x[0].isalpha()
-            else ord(x[0])
+            key=lambda y: list(
+                map(
+                    lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
+                    if x.isalpha()
+                    else ord(x),
+                    y,
+                )
+            )
         )
 
     def __getitem__(self, index) -> str:
@@ -76,7 +82,8 @@ class QuickShifterLines:
     用于处理多行输入的循环移位序列
     内部调用QuickShifer类进行处理
 
-    :param string: 给定多行字符串
+    :param str_list: 给定多行字符串序列
+    :type str_list: list[str]
     """
 
     def __init__(self, str_list: list[str]) -> None:
@@ -120,7 +127,7 @@ class QuickShifterIter:
     """
 
     def __init__(self, queue: list[str]) -> None:
-        self.queue = queue
+        self.queue = deque(queue)
         self.len = len(queue)
         self.count = 0
 
@@ -130,6 +137,6 @@ class QuickShifterIter:
     def __next__(self) -> str:
         if self.count >= self.len:
             raise StopIteration
-        self.queue.append(self.queue.pop(0))
+        self.queue.append(self.queue.popleft())
         self.count += 1
         return " ".join(self.queue)
