@@ -43,9 +43,9 @@ def api_qshifter():
         return render_template("result_file.html", result=result)
 
     # 文本输入处理
-    str = request.form.get("qshift")
-    if str:
-        test = QuickShifter(str)
+    res = request.form.get("qshift")
+    if res:
+        test = QuickShifter(res)
         array = test.shifts
 
     # 将结果传递到视图模板中，遍历输出其中的元素

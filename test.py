@@ -1,8 +1,6 @@
-from qshifter import QuickShifter
+from qshifter import QuickShifter, QuickShifterLines
 from color import *
 from functools import wraps
-
-import qshifter
 
 
 def test(func):
@@ -69,10 +67,6 @@ class QshifterTest:
         print(f"running {passed + failed} tests: {passed} passed, {failed} failed")
 
     @test
-    def test_test(self):
-        assert 1 == 2
-
-    @test
     def test_simple(self):
         tst = QuickShifter("A simple test string")
         res = [
@@ -98,17 +92,36 @@ class QshifterTest:
 
 
 @test
-def test_outtest():
-    assert 2 + 2 == 4
+def test_sort_2():
+    tst = QuickShifter("aa aA ab aB ap aP")
+    res = [
+        "aa aA ab aB ap aP",
+        "aA ab aB ap aP aa",
+        "ab aB ap aP aa aA",
+        "aB ap aP aa aA ab",
+        "ap aP aa aA ab aB",
+        "aP aa aA ab aB ap",
+    ]
+    assert tst.shifts == res
+
+
+@test
+def test_lines():
+    tst = QuickShifterLines(
+        ["A a B b", "Another yet new string", "Once upon a time", "It is my shift now"],
+    )
+
+    res = [
+        "a B b A",
+        "A a B b",
+        "b A a B",
+        "B b A a",
+    ]
+    assert tst[0] == res
 
 
 # TEST: 测试部分
 if __name__ == "__main__":
-    tst = qshifter.QuickShifterLines(
-        ["A a B b", "Another yet new string", "Once upon a time", "It is my shift now"]
-    )
-    tst.show_all()
-
     # TEST: 运行所有测试
-    qshifer_test = QshifterTest([test_outtest])
+    qshifer_test = QshifterTest([test_sort_2, test_lines])
     qshifer_test.run_all_tests()

@@ -1,5 +1,6 @@
 from typing import Self
 from collections import deque
+from color import *
 
 
 class QuickShifter:
@@ -10,9 +11,9 @@ class QuickShifter:
     """
 
     def __init__(self, string: str) -> None:
-        self.string = string
+        self.string = string.strip()
 
-        self.word_list = string.split(" ")
+        self.words = string.split(" ")
 
         self.shifts: list[str] = [x for x in self]
 
@@ -66,15 +67,21 @@ class QuickShifter:
         return self.shifts[index]
 
     def __iter__(self):
-        return QuickShifterIter(self.word_list)
+        return QuickShifterIter(self.words)
 
     def __len__(self) -> int:
         return len(self.shifts)
 
-    #! TODO: 详细模式输出/统计
-    def show(self):
-        for shift in self.shifts:
-            print(shift)
+    def show(self, verbose: bool = False):
+        if self.string != "":
+            if verbose:
+                print(f"[{color(self.string, BOLD)}]:")
+                for shift in self.shifts:
+                    print(shift)
+                print(f"\n共输出{self.__len__()}行移位序列")
+            else:
+                for shift in self.shifts:
+                    print(shift)
 
 
 class QuickShifterLines:
@@ -82,45 +89,84 @@ class QuickShifterLines:
     用于处理多行输入的循环移位序列
     内部调用QuickShifer类进行处理
 
+    若merge为True,仅会产生一个list
+
     :param str_list: 给定多行字符串序列
     :type str_list: list[str]
+
+    :param merge: 是否合并输出（默认否）
+    :type merge: bool = False
     """
 
-    def __init__(self, str_list: list[str]) -> None:
+    def __init__(self, str_list: list[str], merge: bool = False) -> None:
         self.lines = str_list
+        self.merge = merge
 
-        self.line_shifts: list[list[str]] = []
+        self.lshifts: list[list[str]] = []
+        self.all_len: int = 0
 
-        for line in self.lines:
-            line_qshifter = QuickShifter(line)
-            self.line_shifts.append(line_qshifter.shifts)
+        if merge:
+            shifts = []
+            for string in str_list:
+                words = string.split(" ")
+                shifts += [x for x in QuickShifterIter(words)]
+            shifts.sort(
+                key=lambda y: list(
+                    map(
+                        lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
+                        if x.isalpha()
+                        else ord(x),
+                        y,
+                    )
+                )
+            )
+            self.all_len = shifts.__len__()
+            self.lshifts.append(shifts)
+        else:
+            for line in self.lines:
+                line_shifter = QuickShifter(line)
+                self.all_len += line_shifter.__len__()
+                self.lshifts.append(line_shifter.shifts)
 
     @classmethod
-    def from_str(cls, string: str) -> Self:
-        return cls(string.split("\n"))
+    def from_str(cls, string: str, merge: bool = False) -> Self:
+        return cls(string.split("\n"), merge=merge)
 
     def __getitem__(self, index) -> str:
-        return self.line_shifts[index]
+        return self.lshifts[index]
 
     def __iter__(self):
-        return self.line_shifts.__iter__()
+        return self.lshifts.__iter__()
 
     def __len__(self) -> int:
-        return len(self.line_shifts)
+        return len(self.lshifts)
 
-    #! TODO: 详细模式输出/统计
     def show(self, index: int):
-        for shift in self.line_shifts[index]:
+        """在merge值为True时，忽略index参数（暂定）"""
+        for shift in self.lshifts[0 if self.merge else index]:
             print(shift)
 
-    def show_all(self):
+    def show_all(self, verbose: bool = False):
+        """显示所有移位序列
+        :param verbose: 是否显示详细信息（默认否）
+        :type verbose: bool = False
+
+        """
         for line in range(self.__len__()):
-            self.show(line)
-            print()
+            if verbose:
+                print(
+                    f"[{color(self.lines[line], BOLD) if not self.merge else "合并结果"}]:"
+                )
+                self.show(line)
+                print()
+            else:
+                self.show(line)
+        if verbose:
+            print(f"共输出{self.all_len}行移位序列，处理{len(self.lines)}个字符串")
 
 
 class QuickShifterIter:
-    """QuickShifter类专用迭代器
+    """QuickShifter[Lines]类专用迭代器
     不要在别的类调用/单独调用
 
     :param queue: 给定单词序列
