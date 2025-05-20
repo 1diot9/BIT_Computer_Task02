@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Example</title>
+</head>
+<body>
+    <form action="/api/qshifter" method="post">
+        <label for="qshift">String:</label>
+        <br>
+        <input type="text" id="qshift" name="qshift">
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+
+<!--    支持将多个句子写入文本并上传-->
+    <form action="/api/qshifter" method="post" enctype="multipart/form-data">
+        <br><br>
+        <label for="file">File:</label>
+        <br>
+        <input type="file" id="file" name="file">
+        <br>
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>
