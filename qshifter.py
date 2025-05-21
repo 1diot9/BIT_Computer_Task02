@@ -22,6 +22,7 @@ PROMPT = color("qs> ", RED)
 
 
 def interactive(verbose: bool) -> bool:
+    # TODO: 处理多行内容
     input_string: str = ""
     try:
         input_string = input(PROMPT).strip()

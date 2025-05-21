@@ -1,6 +1,7 @@
 from qshifter import QuickShifter, QuickShifterLines
 from color import *
 from functools import wraps
+from pyinstrument import Profiler
 
 
 def test(func):
@@ -41,6 +42,8 @@ class QshifterTest:
     :param func_list: 类外部测试函数序列，可以为空，默认为空
     :type func_list: list | None
     """
+
+    # TODO: 性能测试
 
     def __init__(self, func_list: list | None = None) -> None:
 
@@ -120,8 +123,35 @@ def test_lines():
     assert tst[0] == res
 
 
+@test
+def test_bigdata():
+    tst = QuickShifterLines(
+        [
+            "A a B b",
+            "Another yet new string",
+            "Once upon a time" * 10,
+            "It is my shift now" * 10,
+        ]
+        * 100,
+    )
+
+    res = [
+        "a B b A",
+        "A a B b",
+        "b A a B",
+        "B b A a",
+    ]
+    assert tst[0] == res
+
+
 # TEST: 测试部分
 if __name__ == "__main__":
+    profiler = Profiler()
+    profiler.start()
+
     # TEST: 运行所有测试
-    qshifer_test = QshifterTest([test_sort_2, test_lines])
+    qshifer_test = QshifterTest([test_sort_2, test_lines, test_bigdata])
     qshifer_test.run_all_tests()
+
+    profiler.stop()
+    profiler.print()

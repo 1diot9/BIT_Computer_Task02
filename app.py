@@ -35,8 +35,6 @@ def api_qshifter():
         # 将结果传递到视图模板中，遍历输出其中的元素
         return render_template("result.html", result=array)
 
-
-
     # TODO: 增加文件上传防护
     # 文件上传处理
     array = []
@@ -58,12 +56,12 @@ def api_qshifter():
         result = text.lshifts
 
         # 每个句子单独排序
-        '''
+        """
         for line in processed_lines:
             text = QuickShifter(line)
             array = text.shifts
             result.append(array)
-        '''
+        """
 
         # 增加result下载功能
         with open("./tmp/output.txt", "w") as f:
@@ -72,28 +70,27 @@ def api_qshifter():
                     f.write(j + "\n")
             output = f
 
-
-        return render_template("result_file.html", result=result, count=count, output=output)
+        return render_template(
+            "result_file.html", result=result, count=count, output=output
+        )
     else:
         return "请输入文本或选择文件！！！"
 
 
 # 文件下载
-@app.route('/download')
+@app.route("/download")
 def download_file():
 
     with open("./tmp/output.txt", "rb") as f:
         output = f.read()
 
-
     mem_io = io.BytesIO()
     mem_io.write(output)
     mem_io.seek(0)
 
-
     response = make_response(mem_io.getvalue())
-    response.headers['Content-Type'] = 'application/octet-stream'
-    response.headers['Content-Disposition'] = 'attachment; filename=result.txt'
+    response.headers["Content-Type"] = "application/octet-stream"
+    response.headers["Content-Disposition"] = "attachment; filename=result.txt"
     return response
 
 
