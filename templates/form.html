@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Form Example</title>
+    <title>表单页面</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+<!-- 现在只支持单行输入，所以目前用于测试 -->
     <form action="/api/qshifter" method="post">
-        <label for="qshift">直接输入文本：</label>
+        <label for="qshift">单行文本输入：</label>
         <br>
         <input type="text" id="qshift" name="qshift">
         <br>

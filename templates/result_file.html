@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-
+{% block title %}
+	result_file
+{% endblock %}
 {% block content %}
 <h2>Result</h2>
 
@@ -13,5 +15,11 @@
         {% endfor %}
         <br>
     {% endfor %}
+
+    <p>共处理：{{ count }}个句子</p>
+
+    <p>Download Result</p>
+    <!-- 生成下载链接，指向/download路由 -->
+    <a href="{{ url_for('download_file') }}">点击下载Result</a>
 
 {% endblock %}
