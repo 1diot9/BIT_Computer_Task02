@@ -1,6 +1,9 @@
 from typing import Self
 from collections import deque
+from functools import cmp_to_key, cache
 from color import *
+
+MAGIC_LEN = 1000
 
 
 class QuickShifter:
@@ -52,16 +55,18 @@ class QuickShifter:
         """
         # NOTE: 如果仅循环移位4位，会导致字母p ~ z与a ~ o的大小关系出现问题
         # WARN: 此举会破坏除拉丁字母之外的ASCII字符的大小关系
-        self.shifts.sort(
-            key=lambda y: list(
-                map(
-                    lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
-                    if x.isalpha()
-                    else ord(x),
-                    y,
-                )
-            )
-        )
+        magic = lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
+        magic = magic if len(string) < MAGIC_LEN else cache(magic)
+
+        def cmp(x, y) -> int:
+            for x, y in zip(x, y):
+                if x == y:
+                    continue
+                mx, my = magic(x), magic(y)
+                return mx - my
+            return 0
+
+        self.shifts.sort(key=cmp_to_key(cmp))
 
     def __getitem__(self, index) -> str:
         return self.shifts[index]
@@ -110,16 +115,19 @@ class QuickShifterLines:
             for string in str_list:
                 words = string.split(" ")
                 shifts += [x for x in QuickShifterIter(words)]
-            shifts.sort(
-                key=lambda y: list(
-                    map(
-                        lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
-                        if x.isalpha()
-                        else ord(x),
-                        y,
-                    )
-                )
-            )
+
+            magic = cache(lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1)
+
+            def cmp(x, y) -> int:
+                for x, y in zip(x, y):
+                    if x == y:
+                        continue
+                    mx, my = magic(x), magic(y)
+                    return mx - my
+                return -1
+
+            shifts.sort(key=cmp_to_key(cmp))
+
             self.all_len = shifts.__len__()
             self.lshifts.append(shifts)
         else:
@@ -168,6 +176,7 @@ class QuickShifterLines:
 class QuickShifterIter:
     """QuickShifter[Lines]类专用迭代器
     不要在别的类调用/单独调用
+    利用双端队列加速
 
     :param queue: 给定单词序列
     """
