@@ -2,7 +2,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 
-from qshifter import QuickShifter
+from qshifter import QuickShifter, QuickShifterLines
 
 app = Flask(__name__)
 
@@ -36,10 +36,19 @@ def api_qshifter():
         # 在这里可以对每一行进行处理
         processed_lines = [line.strip() for line in content]
         result = []
+
+        # 所有句子一起排序
+        text = QuickShifterLines(processed_lines, merge=True)
+        result = text.lshifts
+
+        # 每个句子单独排序
+        '''
         for line in processed_lines:
             text = QuickShifter(line)
             array = text.shifts
             result.append(array)
+        '''
+
         return render_template("result_file.html", result=result)
 
     # 文本输入处理
