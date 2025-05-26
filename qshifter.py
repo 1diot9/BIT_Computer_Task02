@@ -18,16 +18,25 @@ BANNER: str = color(
     BLUE,
 )
 
-PROMPT = color("qs> ", RED)
+NORMAL_PROMPT = color("qs> ", RED)
+APPEND_PROMPT = color("ap> ", CYAN)
 
 
 def interactive(verbose: bool) -> bool:
-    # TODO: 处理多行内容
     input_string: str = ""
+    lines: bool = False
     try:
-        input_string = input(PROMPT).strip()
-        shifter = QuickShifter(input_string)
-        shifter.show(verbose=verbose)
+        input_string = input(NORMAL_PROMPT).strip()
+        while input_string.endswith("\\"):
+            lines = True
+            input_string = input_string[:-1]
+            input_string += input(APPEND_PROMPT).strip()
+        if lines:
+            shifter = QuickShifterLines(input_string.split("\n"))
+            shifter.show_all(verbose=verbose)
+        else:
+            shifter = QuickShifter(input_string)
+            shifter.show(verbose=verbose)
     except (EOFError, KeyboardInterrupt):
         return False
     return input_string != "exit"

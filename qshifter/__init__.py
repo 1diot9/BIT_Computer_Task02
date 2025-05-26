@@ -1,6 +1,7 @@
 from typing import Self
 from collections import deque
 from functools import cmp_to_key, cache
+from string import ascii_letters
 from color import *
 
 MAGIC_LEN = 1000
@@ -62,8 +63,7 @@ class QuickShifter:
             for x, y in zip(x, y):
                 if x == y:
                     continue
-                mx, my = magic(x), magic(y)
-                return mx - my
+                return magic(x) - magic(y)
             return 0
 
         self.shifts.sort(key=cmp_to_key(cmp))
@@ -122,9 +122,8 @@ class QuickShifterLines:
                 for x, y in zip(x, y):
                     if x == y:
                         continue
-                    mx, my = magic(x), magic(y)
-                    return mx - my
-                return -1
+                    return magic(x) - magic(y)
+                return 0
 
             shifts.sort(key=cmp_to_key(cmp))
 
