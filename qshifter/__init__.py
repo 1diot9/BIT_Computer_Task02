@@ -40,7 +40,7 @@ class QuickShifter:
         rol(ord('B'), 3) == 0b0001_0010
         rol(ord('p'), 3) == 0b1000_0011
         rol(ord('P'), 3) == 0b1000_0010
-        
+
         此时满足 A < a < B < b < P < p，排序结果是A a B b P p
         为此我们要转换一下同一个字母大小写的大小关系
 
@@ -56,7 +56,7 @@ class QuickShifter:
         """
         # NOTE: 如果仅循环移位4位，会导致字母p ~ z与a ~ o的大小关系出现问题
         # WARN: 此举会破坏除拉丁字母之外的ASCII字符的大小关系
-        magic = lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
+        def magic(x): return (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1
         magic = magic if len(string) < MAGIC_LEN else cache(magic)
 
         def cmp(x, y) -> int:
@@ -81,8 +81,8 @@ class QuickShifter:
         if self.string != "":
             if verbose:
                 print(f"[{color(self.string, BOLD)}]:")
-                for shift in self.shifts:
-                    print(shift)
+                for i, shift in enumerate(self.shifts):
+                    print(f"{i + 1}: {shift}")
                 print(f"\n共输出{self.__len__()}行移位序列")
             else:
                 for shift in self.shifts:
@@ -116,7 +116,8 @@ class QuickShifterLines:
                 words = string.split(" ")
                 shifts += [x for x in QuickShifterIter(words)]
 
-            magic = cache(lambda x: (((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1)
+            magic = cache(lambda x: (
+                ((ord(x) << 3) | (ord(x) >> 5)) & 0xFF) ^ 0x1)
 
             def cmp(x, y) -> int:
                 for x, y in zip(x, y):
@@ -148,10 +149,14 @@ class QuickShifterLines:
     def __len__(self) -> int:
         return len(self.lshifts)
 
-    def show(self, index: int):
+    def show(self, index: int, verbose: bool = False):
         """在merge值为True时，忽略index参数（暂定）"""
-        for shift in self.lshifts[0 if self.merge else index]:
-            print(shift)
+        if verbose:
+            for i, shift in enumerate(self.lshifts[0 if self.merge else index]):
+                print(f"{i + 1}: {shift}")
+        else:
+            for shift in self.lshifts[0 if self.merge else index]:
+                print(shift)
 
     def show_all(self, verbose: bool = False):
         """显示所有移位序列
@@ -164,7 +169,7 @@ class QuickShifterLines:
                 print(
                     f"[{color(self.lines[line], BOLD) if not self.merge else "合并结果"}]:"
                 )
-                self.show(line)
+                self.show(line, verbose=True)
                 print()
             else:
                 self.show(line)

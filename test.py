@@ -1,8 +1,7 @@
 from qshifter import QuickShifter, QuickShifterLines
-from color import *
+from color import color, RED, GREEN
 from functools import wraps
 from pyinstrument import Profiler
-from itertools import pairwise
 
 
 def test(func):
@@ -17,6 +16,7 @@ def test(func):
     :param func: 测试函数
     """
 
+    # TODO: 性能测试
     @wraps(func)
     def wrapper(*args, **kwargs) -> bool:
         name = func.__name__
@@ -44,8 +44,6 @@ class QshifterTest:
     :type func_list: list | None
     """
 
-    # TODO: 性能测试
-
     def __init__(self, func_list: list | None = None) -> None:
 
         if func_list is None:
@@ -68,7 +66,8 @@ class QshifterTest:
                         passed += 1
                     else:
                         failed += 1
-        print(f"running {passed + failed} tests: {passed} passed, {failed} failed")
+        print(
+            f"running {passed + failed} tests: {passed} passed, {failed} failed")
 
     @test
     def test_simple(self):
@@ -124,7 +123,8 @@ def test_sort_2():
 @test
 def test_lines():
     tst = QuickShifterLines(
-        ["A a B b", "Another yet new string", "Once upon a time", "It is my shift now"],
+        ["A a B b", "Another yet new string",
+            "Once upon a time", "It is my shift now"],
     )
 
     res = [
@@ -141,7 +141,7 @@ def test_bigdata():
     import random
     import string
 
-    # 生成一个8字符长的随机字符串
+    # 生成一个100_000字符长的随机字符串压力测试
     random_str = "".join(
         random.choice(string.ascii_letters + " ") for _ in range(100_000)
     )
@@ -177,7 +177,8 @@ if __name__ == "__main__":
     profiler.start()
 
     # TEST: 运行所有测试
-    qshifer_test = QshifterTest([test_sort_2, test_lines, test_bigdata, test_sometext])
+    qshifer_test = QshifterTest(
+        [test_sort_2, test_lines, test_bigdata, test_sometext])
     qshifer_test.run_all_tests()
 
     profiler.stop()
