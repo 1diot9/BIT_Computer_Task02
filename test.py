@@ -1,4 +1,5 @@
 from qshifter import QuickShifter, QuickShifterLines
+from rshifter import RapidShifter, RapidShifterLines
 from color import color, RED, GREEN
 from functools import wraps
 from pyinstrument import Profiler
@@ -146,6 +147,23 @@ def test_bigdata():
         random.choice(string.ascii_letters + " ") for _ in range(100_000)
     )
     QuickShifter(random_str)
+    RapidShifter(random_str).shifts()
+
+
+@test
+def test_biglist():
+    import random
+    import string
+
+    random_str = []
+    # 生成一个100_000字符长的随机字符串压力测试
+    for _ in range(100):
+        random_str += ["".join(
+            random.choice(string.ascii_letters + " ") for _ in range(2000)
+        )]
+
+    QuickShifterLines(random_str, merge=True)
+    RapidShifterLines(random_str).shifts()
 
 
 @test
@@ -178,8 +196,13 @@ if __name__ == "__main__":
 
     # TEST: 运行所有测试
     qshifer_test = QshifterTest(
-        [test_sort_2, test_lines, test_bigdata, test_sometext])
+        [test_sort_2, test_lines, test_bigdata, test_sometext, test_biglist])
     qshifer_test.run_all_tests()
+
+    tst = RapidShifterLines(
+        ["A a B p P b Z z", "a A p p b B a W R P", "A simple test sentence",])
+
+    print(tst.shifts())
 
     profiler.stop()
     profiler.print()
