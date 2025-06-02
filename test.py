@@ -1,8 +1,8 @@
-from qshifter import QuickShifter
-from color import *
+from qshifter import QuickShifter, QuickShifterLines
+from rshifter import RapidShifter, RapidShifterLines
+from color import color, RED, GREEN
 from functools import wraps
-
-import qshifter
+from pyinstrument import Profiler
 
 
 def test(func):
@@ -17,6 +17,7 @@ def test(func):
     :param func: 测试函数
     """
 
+    # TODO: 性能测试
     @wraps(func)
     def wrapper(*args, **kwargs) -> bool:
         name = func.__name__
@@ -66,11 +67,8 @@ class QshifterTest:
                         passed += 1
                     else:
                         failed += 1
-        print(f"running {passed + failed} tests: {passed} passed, {failed} failed")
-
-    @test
-    def test_test(self):
-        assert 1 == 2
+        print(
+            f"running {passed + failed} tests: {passed} passed, {failed} failed")
 
     @test
     def test_simple(self):
@@ -96,19 +94,115 @@ class QshifterTest:
         ]
         assert tst.shifts == res
 
+    @test
+    def test_sort_blank(self):
+        tst = QuickShifter("a aA ap aP aaa")
+        res = [
+            "a aA ap aP aaa",
+            "aaa a aA ap aP",
+            "aA ap aP aaa a",
+            "ap aP aaa a aA",
+            "aP aaa a aA ap",
+        ]
+        assert tst.shifts == res
+
 
 @test
-def test_outtest():
-    assert 2 + 2 == 4
+def test_sort_2():
+    tst = QuickShifter("aa aA ab aB ap aP")
+    res = [
+        "aa aA ab aB ap aP",
+        "aA ab aB ap aP aa",
+        "ab aB ap aP aa aA",
+        "aB ap aP aa aA ab",
+        "ap aP aa aA ab aB",
+        "aP aa aA ab aB ap",
+    ]
+    assert tst.shifts == res
+
+
+@test
+def test_lines():
+    tst = QuickShifterLines(
+        ["A a B b", "Another yet new string",
+            "Once upon a time", "It is my shift now"],
+    )
+
+    res = [
+        "a B b A",
+        "A a B b",
+        "b A a B",
+        "B b A a",
+    ]
+    assert tst[0] == res
+
+
+@test
+def test_bigdata():
+    import random
+    import string
+
+    # 生成一个100_000字符长的随机字符串压力测试
+    random_str = "".join(
+        random.choice(string.ascii_letters + " ") for _ in range(100_000)
+    )
+    QuickShifter(random_str)
+    RapidShifter(random_str).shifts()
+
+
+@test
+def test_biglist():
+    import random
+    import string
+
+    random_str = []
+    # 生成一个100_000字符长的随机字符串压力测试
+    for _ in range(100):
+        random_str += ["".join(
+            random.choice(string.ascii_letters + " ") for _ in range(2000)
+        )]
+
+    QuickShifterLines(random_str, merge=True)
+    RapidShifterLines(random_str).shifts()
+
+
+@test
+def test_sometext():
+
+    tst = QuickShifterLines(
+        [
+            "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+            "Sed facilisis gravida turpis id iaculis libero sollicitudin vel",
+            "Etiam gravida justo sit amet ipsum tincidunt, sed rutrum ante pulvinar",
+            "Sed eget quam nec risus consequat faucibus",
+            "Aliquam id dui placerat consequat mauris non efficitur erat",
+            "Curabitur ullamcorper a quam sed luctus",
+            "Sed quis tempus elit",
+            "Aenean tincidunt lacus ut condimentum vehicula nunc leo elementum odio a vehicula metus urna eu massa",
+            "Suspendisse a iaculis quam",
+            "Curabitur lacinia ligula facilisis congue volutpat diam felis rutrum quam",
+            "et facilisis ante massa sed risus",
+        ]
+        * 100,
+        merge=True,
+    )
+    assert tst.all_len == 90 * 100
 
 
 # TEST: 测试部分
 if __name__ == "__main__":
-    tst = qshifter.QuickShifterLines(
-        ["A a B b", "Another yet new string", "Once upon a time", "It is my shift now"]
-    )
-    tst.show_all()
+    profiler = Profiler()
+    profiler.start()
 
     # TEST: 运行所有测试
-    qshifer_test = QshifterTest([test_outtest])
+    qshifer_test = QshifterTest(
+        [test_sort_2, test_lines, test_bigdata, test_sometext, test_biglist])
     qshifer_test.run_all_tests()
+
+    tst = RapidShifterLines(
+        ["A a B p P b Z z", "a A p p b B a W R P", "A simple test sentence",])
+
+    print(tst.shifts())
+
+    profiler.stop()
+    profiler.print()

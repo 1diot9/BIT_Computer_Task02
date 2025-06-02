@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Form Example</title>
+    <title>表单页面</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+<!-- 现在只支持单行输入，所以目前用于测试 -->
     <form action="/api/qshifter" method="post">
-        <label for="qshift">String:</label>
+        <label for="qshift">单行文本输入：</label>
         <br>
         <input type="text" id="qshift" name="qshift">
         <br>
@@ -15,7 +17,7 @@
 <!--    支持将多个句子写入文本并上传-->
     <form action="/api/qshifter" method="post" enctype="multipart/form-data">
         <br><br>
-        <label for="file">File:</label>
+        <label for="file">支持上传.txt文件，句子以换行分隔：</label>
         <br>
         <input type="file" id="file" name="file">
         <br>
