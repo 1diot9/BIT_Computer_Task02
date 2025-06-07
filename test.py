@@ -146,8 +146,28 @@ def test_bigdata():
     random_str = "".join(
         random.choice(string.ascii_letters + " ") for _ in range(100_000)
     )
-    QuickShifter(random_str)
-    RapidShifter(random_str).shifts()
+    # print(random_str)
+    # QuickShifter(random_str)
+    rs = RapidShifter(random_str)
+    rs.process()
+    _ = rs.shifts()[0]
+    # RapidShifter(random_str).qshifts(16)
+
+
+@test
+def test_bigtimes():
+    import random
+    import string
+
+    # 生成一个100_000字符长的随机字符串压力测试
+    for _ in range(100):
+        random_str = "".join(
+            random.choice(string.ascii_letters + " ") for _ in range(10000)
+        )
+    # print(random_str)
+        QuickShifter(random_str)
+        RapidShifter(random_str).process()
+        # RapidShifter(random_str).qshifts(16)
 
 
 @test
@@ -157,9 +177,9 @@ def test_biglist():
 
     random_str = []
     # 生成一个100_000字符长的随机字符串压力测试
-    for _ in range(100):
+    for _ in range(1000):
         random_str += ["".join(
-            random.choice(string.ascii_letters + " ") for _ in range(2000)
+            random.choice(string.ascii_letters + " ") for _ in range(50)
         )]
 
     QuickShifterLines(random_str, merge=True)
@@ -191,18 +211,32 @@ def test_sometext():
 
 # TEST: 测试部分
 if __name__ == "__main__":
+    '''
+    profiler = Profiler()
+    profiler.start()
+
+    qshifer_test = QshifterTest(
+        [test_bigdata])
+    qshifer_test.run_all_tests()
+
+    profiler.stop()
+    profiler.print()
+    '''
     profiler = Profiler()
     profiler.start()
 
     # TEST: 运行所有测试
     qshifer_test = QshifterTest(
-        [test_sort_2, test_lines, test_bigdata, test_sometext, test_biglist])
+        [test_sort_2, test_lines, test_bigdata,
+            test_sometext, test_biglist, test_bigtimes]
+    )
     qshifer_test.run_all_tests()
 
     tst = RapidShifterLines(
         ["A a B p P b Z z", "a A p p b B a W R P", "A simple test sentence",])
 
-    print(tst.shifts())
+    tst2 = RapidShifter("Aspera Pipe process Zenic Brute http://www.baidu.com")
+    tst2.show_all(verbose=True)
 
     profiler.stop()
     profiler.print()

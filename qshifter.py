@@ -1,6 +1,6 @@
 from qshifter import QuickShifter, QuickShifterLines
 from color import color, RED, CYAN, BLUE, YELLOW
-from rshifter import RapidShifter
+# from rshifter import RapidShifter
 import argparse
 
 
