@@ -1,10 +1,10 @@
 from qshifter import QuickShifter, QuickShifterLines
 from color import color, RED, CYAN, BLUE, YELLOW
-# from rshifter import RapidShifter
+from rshifter import RapidShifter
 import argparse
 
 
-VERSION = "0.1.0"
+VERSION = "0.1.2"
 
 BANNER: str = color(
     f"""\
@@ -20,7 +20,7 @@ BANNER: str = color(
 )
 
 NORMAL_PROMPT = color("qs> ", RED)
-APPEND_PROMPT = color("ap> ", CYAN)
+APPEND_PROMPT = color("==> ", CYAN)
 
 
 def interactive(verbose: bool) -> bool:
@@ -36,8 +36,9 @@ def interactive(verbose: bool) -> bool:
             shifter = QuickShifterLines(input_string.split("\n"))
             shifter.show_all(verbose=verbose)
         else:
-            shifter = QuickShifter(input_string)
-            shifter.show(verbose=verbose)
+            # shifter = QuickShifter(input_string)
+            shifter = RapidShifter(input_string)
+            shifter.show_all(verbose=verbose)
     except (EOFError, KeyboardInterrupt):
         return False
     return input_string != "exit"
