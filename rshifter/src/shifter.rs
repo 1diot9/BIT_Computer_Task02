@@ -140,7 +140,7 @@ impl RapidShifter {
 
         for (num, line) in shifts.iter().enumerate() {
             if verbose {
-                print!("{}: ", num + 1);
+                print!("{}", Color::Purple.color(&format!("[{:0>2}] ", num + 1)));
                 println!("{} {}", Color::Blue.color(line), Color::Yellow.color(url));
             } else {
                 println!("{line} {url}");
@@ -386,7 +386,7 @@ impl RapidShifterLines {
             };
 
             if verbose {
-                print!("{}: ", num + 1);
+                print!("{}", Color::Purple.color(&format!("[{:0>2}] ", num + 1)));
                 println!("{} {}", Color::Blue.color(desc), Color::Yellow.color(url));
             } else {
                 println!("{desc} {url}");
