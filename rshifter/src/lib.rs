@@ -1,8 +1,49 @@
 use crate::shifter::{RapidShifter, RapidShifterLines};
 use pyo3::prelude::*;
+use std::collections::VecDeque;
 
 mod color;
 mod shifter;
+
+enum Direction {
+    Left,
+    Right,
+}
+
+struct RapidShifterIter<'a> {
+    queue: VecDeque<&'a str>,
+    length: usize,
+    direction: Direction,
+}
+
+impl RapidShifterIter<'_> {
+    fn new(input: Vec<&str>, length: Option<usize>, direction: Direction) -> RapidShifterIter {
+        let length = length.unwrap_or(input.len());
+        RapidShifterIter {
+            queue: VecDeque::from(input),
+            length,
+            direction,
+        }
+    }
+}
+
+impl Iterator for RapidShifterIter<'_> {
+    type Item = String;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.length == 0 {
+            return None;
+        }
+
+        match self.direction {
+            Direction::Left => self.queue.rotate_left(1),
+            Direction::Right => self.queue.rotate_right(1),
+        };
+
+        self.length -= 1;
+
+        Some(self.queue.make_contiguous().join(" "))
+    }
+}
 
 /// A Python module implemented in Rust.
 #[pymodule]

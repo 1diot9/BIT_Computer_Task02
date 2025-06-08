@@ -11,7 +11,7 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn color(&self, string: &String) -> String {
+    pub fn color(&self, string: &str) -> String {
         let clr = match self {
             Color::Red => "31",
             Color::Green => "32",

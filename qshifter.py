@@ -1,6 +1,6 @@
 from qshifter import QuickShifter, QuickShifterLines
 from color import color, RED, CYAN, BLUE, YELLOW
-from rshifter import RapidShifter
+from rshifter import RapidShifter, RapidShifterLines
 import argparse
 
 
@@ -30,10 +30,11 @@ def interactive(verbose: bool) -> bool:
         input_string = input(NORMAL_PROMPT).strip()
         while input_string.endswith("\\"):
             lines = True
-            input_string = input_string[:-1]
+            input_string = input_string[:-1] + '\n'
             input_string += input(APPEND_PROMPT).strip()
         if lines:
-            shifter = QuickShifterLines(input_string.split("\n"))
+            # shifter = QuickShifterLines(input_string.split("\n"))
+            shifter = RapidShifterLines(input_string.split("\n"))
             shifter.show_all(verbose=verbose)
         else:
             # shifter = QuickShifter(input_string)

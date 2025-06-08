@@ -232,8 +232,11 @@ if __name__ == "__main__":
     )
     qshifer_test.run_all_tests()
 
-    tst = RapidShifterLines(
-        ["A a B p P b Z z", "a A p p b B a W R P", "A simple test sentence",])
+    tst1 = RapidShifterLines(
+        ["A a B p P b Z z http://www.google.com",
+         "a A p p b B a W R P https://127.0.0.1",
+         "A simple test sentence with no https",])
+    tst1.show_all(verbose=True)
 
     tst2 = RapidShifter("Aspera Pipe process Zenic Brute http://www.baidu.com")
     tst2.show_all(verbose=True)

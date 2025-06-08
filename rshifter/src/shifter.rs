@@ -1,6 +1,6 @@
 use std::arch::asm;
 use std::cmp::Ordering;
-use std::collections::VecDeque;
+use std::collections::HashMap;
 use std::iter::zip;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -10,59 +10,48 @@ use pyo3::prelude::*;
 use regex::Regex;
 
 use crate::color::Color;
+use crate::Direction;
+use crate::RapidShifterIter;
 
 type Shift = Arc<Mutex<Vec<String>>>;
 
-enum Direction {
-    Left,
-    Right,
-}
+const NONE: &str = "<None>";
 
-#[derive(Clone)]
-struct Item {
-    desc: String,
-    url: Option<String>,
-}
-
-impl Item {
-    fn new(desc: String, url: Option<String>) -> Self {
-        Item { desc, url }
-    }
-}
-
-pub trait Shifter {
-    fn show_all(verbose: bool);
-}
-
-fn maigc_sort(vector: &mut [String]) {
-    vector.sort_unstable_by(|x, y| {
-        let mut iter = zip(x.as_bytes(), y.as_bytes());
-        let (mut key_x, mut key_y): (u8, u8);
-        loop {
-            if let Some((dx, dy)) = iter.next() {
-                // SAFETY: only read dx & dy
-                unsafe {
-                    asm!(
-                        "mov r10b, BYTE PTR [r8]",
-                        "mov r11b, BYTE PTR [r9]",
-                        "rol r10b, 3", "rol r11b, 3", "xor r10b, 0x1", "xor r11b, 0x1",
-                        in("r8") dx,
-                        in("r9") dy,
-                        out("r10b") key_x,
-                        out("r11b") key_y,
-                    );
-                }
-
-                match key_x.cmp(&key_y) {
-                    Ordering::Less => break Ordering::Less,
-                    Ordering::Greater => break Ordering::Greater,
-                    Ordering::Equal => continue,
-                }
-            } else {
-                break y.len().cmp(&x.len());
-            };
+macro_rules! lazy_check {
+    ($param: expr, $func: expr) => {
+        if $param.is_none() {
+            $func;
         }
-    });
+    };
+}
+
+fn magic(x: &str, y: &str) -> Ordering {
+    let mut iter = zip(x.as_bytes(), y.as_bytes());
+    let (mut key_x, mut key_y): (u8, u8);
+    loop {
+        if let Some((dx, dy)) = iter.next() {
+            // SAFETY: only read dx & dy
+            unsafe {
+                asm!(
+                    "mov r10b, BYTE PTR [r8]",
+                    "mov r11b, BYTE PTR [r9]",
+                    "rol r10b, 3", "rol r11b, 3", "xor r10b, 0x1", "xor r11b, 0x1",
+                    in("r8") dx,
+                    in("r9") dy,
+                    out("r10b") key_x,
+                    out("r11b") key_y,
+                );
+            }
+
+            match key_x.cmp(&key_y) {
+                Ordering::Less => break Ordering::Less,
+                Ordering::Greater => break Ordering::Greater,
+                Ordering::Equal => continue,
+            }
+        } else {
+            break y.len().cmp(&x.len());
+        };
+    }
 }
 
 /// RapidShifter
@@ -101,9 +90,7 @@ impl RapidShifter {
     }
 
     pub fn __getitem__(&mut self, index: usize) -> PyResult<&String> {
-        if self.shifts.is_none() {
-            self.process();
-        }
+        lazy_check!(self.shifts, self.process());
 
         if index >= self.shifts.as_ref().unwrap().len() {
             return Err(exceptions::PyIndexError::new_err(
@@ -115,21 +102,18 @@ impl RapidShifter {
 
     pub fn process(&mut self) {
         let mut shifts = self.iter().collect::<Vec<String>>();
-        maigc_sort(&mut shifts);
+        shifts.sort_unstable_by(|x, y| magic(x, y));
         self.shifts = Some(shifts);
     }
 
     pub fn shifts(&mut self) -> &Vec<String> {
-        if self.shifts.is_none() {
-            self.process();
-        }
+        lazy_check!(self.shifts, self.process());
+
         self.shifts.as_ref().unwrap()
     }
 
     pub fn show_line(&mut self, line: usize) -> PyResult<()> {
-        if self.shifts.is_none() {
-            self.process();
-        }
+        lazy_check!(self.shifts, self.process());
 
         if line > self.shifts.as_ref().unwrap().len() {
             return Err(exceptions::PyIndexError::new_err(
@@ -148,23 +132,19 @@ impl RapidShifter {
 
     #[pyo3(signature = (verbose=false))]
     pub fn show_all(&mut self, verbose: bool) {
-        if self.shifts.is_none() {
-            self.process();
-        }
+        lazy_check!(self.shifts, self.process());
 
         let shifts = self.shifts.as_ref().unwrap();
 
-        let none = String::from("<None>");
-        let url = self.url.as_ref().unwrap_or(&none);
+        let url = self.url.as_ref().map_or(NONE, |s| s.as_str());
 
         for (num, line) in shifts.iter().enumerate() {
-            let (line, url) = if verbose {
+            if verbose {
                 print!("{}: ", num + 1);
-                (&Color::Blue.color(line), &Color::Yellow.color(url))
+                println!("{} {}", Color::Blue.color(line), Color::Yellow.color(url));
             } else {
-                (line, url)
+                println!("{line} {url}");
             };
-            println!("{line} {url}");
         }
     }
 
@@ -272,7 +252,7 @@ impl RapidShifter {
             }
 
             let mut result = (*result.lock().unwrap()).to_owned();
-            maigc_sort(&mut result);
+            result.sort_unstable_by(|x, y| magic(x, y));
             result
         })
     }
@@ -292,10 +272,26 @@ impl RapidShifter {
 
 const THREADS: usize = 16;
 
+type UrlID = u64;
+
+#[derive(Clone)]
+struct Item {
+    desc: String,
+    url_id: Option<UrlID>,
+}
+
+impl Item {
+    fn new(desc: String, url: Option<UrlID>) -> Self {
+        Item { desc, url_id: url }
+    }
+}
+
 #[pyclass]
 pub struct RapidShifterLines {
     item: Vec<Item>,
-    shifts: Option<Vec<String>>,
+    shifts: Option<Vec<Item>>,
+
+    urlmap: HashMap<UrlID, String>,
 }
 
 #[pymethods]
@@ -304,33 +300,42 @@ impl RapidShifterLines {
     pub fn new(item: Vec<String>) -> Self {
         let re = Regex::new(r"^(https?|ftp)://[^\s/$.?#].[^\s]*$").unwrap();
 
+        let mut urlmap = HashMap::new();
+        let mut id = 0u64;
+
         let item = item
             .iter()
             .map(|s| {
                 let (desc, url) = s.trim().rsplit_once(' ').unwrap_or_default();
 
                 if re.is_match(url) {
-                    return Item::new(desc.to_string(), Some(url.to_string()));
+                    id += 1;
+                    urlmap.insert(id, url.to_string());
+                    return Item::new(desc.to_string(), Some(id));
                 };
 
                 Item::new(s.to_owned(), None)
             })
             .collect();
 
-        RapidShifterLines { item, shifts: None }
+        RapidShifterLines {
+            item,
+            shifts: None,
+            urlmap,
+        }
     }
 
-    pub fn process(&mut self) {}
-
-    pub fn shifts(&self, py: Python<'_>) -> Vec<String> {
+    pub fn process(&mut self, py: Python<'_>) {
         py.allow_threads(move || {
-            let result: Shift = Arc::new(Mutex::new(Vec::new()));
+            let result: Arc<Mutex<Vec<Item>>> = Arc::new(Mutex::new(Vec::new()));
 
             for pieces in self.item.chunks(THREADS) {
                 let mut handles = Vec::new();
 
                 for piece in pieces {
                     let string = piece.desc.to_string();
+                    let url_id = piece.url_id;
+
                     let part = Arc::clone(&result);
 
                     handles.push(thread::spawn(move || {
@@ -339,6 +344,7 @@ impl RapidShifterLines {
                             None,
                             Direction::Left,
                         )
+                        .map(|s| Item::new(s, url_id))
                         .collect();
                         part.lock().unwrap().append(shifts);
                     }));
@@ -350,45 +356,41 @@ impl RapidShifterLines {
             }
 
             let mut result = (*result.lock().unwrap()).to_owned();
-            maigc_sort(&mut result);
-            result
+            result.sort_unstable_by(|x, y| magic(&x.desc, &y.desc));
+            self.shifts = Some(result);
         })
     }
 
-    pub fn show_all(&self) {}
-}
+    pub fn shifts(&mut self, py: Python<'_>) -> Vec<&String> {
+        lazy_check!(self.shifts, self.process(py));
 
-struct RapidShifterIter<'a> {
-    queue: VecDeque<&'a str>,
-    length: usize,
-    direction: Direction,
-}
-
-impl RapidShifterIter<'_> {
-    fn new(input: Vec<&str>, length: Option<usize>, direction: Direction) -> RapidShifterIter {
-        let length = length.unwrap_or(input.len());
-        RapidShifterIter {
-            queue: VecDeque::from(input),
-            length,
-            direction,
-        }
+        self.shifts
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|s| &s.desc)
+            .collect()
     }
-}
 
-impl Iterator for RapidShifterIter<'_> {
-    type Item = String;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.length == 0 {
-            return None;
+    #[pyo3(signature = (verbose=false))]
+    pub fn show_all(&mut self, py: Python<'_>, verbose: bool) {
+        lazy_check!(self.shifts, self.process(py));
+
+        let shifts = self.shifts.as_ref().unwrap();
+
+        for (num, line) in shifts.iter().enumerate() {
+            let desc = &line.desc;
+            let url = match line.url_id {
+                Some(id) => self.urlmap.get(&id).unwrap(),
+                None => NONE,
+            };
+
+            if verbose {
+                print!("{}: ", num + 1);
+                println!("{} {}", Color::Blue.color(desc), Color::Yellow.color(url));
+            } else {
+                println!("{desc} {url}");
+            };
         }
-
-        match self.direction {
-            Direction::Left => self.queue.rotate_left(1),
-            Direction::Right => self.queue.rotate_right(1),
-        };
-
-        self.length -= 1;
-
-        Some(self.queue.make_contiguous().join(" "))
     }
 }
