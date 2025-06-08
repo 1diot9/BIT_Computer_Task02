@@ -1,10 +1,10 @@
 from qshifter import QuickShifter, QuickShifterLines
-from color import color, RED, CYAN, BLUE, YELLOW
+from color import color, RED, CYAN, BLUE, YELLOW, GREEN
 from rshifter import RapidShifter, RapidShifterLines
 import argparse
 
 
-VERSION = "0.1.2"
+VERSION = "0.2.1"
 
 BANNER: str = color(
     f"""\
@@ -19,8 +19,25 @@ BANNER: str = color(
     BLUE,
 )
 
-NORMAL_PROMPT = color("qs> ", RED)
-APPEND_PROMPT = color("==> ", CYAN)
+NORMAL_PROMPT = color("sft> ", GREEN)
+APPEND_PROMPT = color("+==> ", CYAN)
+
+INFO = color("[*]", BLUE)
+ERROR = color("[x]", RED)
+
+HELP = """\
+命令列表：
+
+help                        展示此帮助
+search|find <PATTERN>       todo
+quit|exit                   退出
+
+rs <DESCRIPTION> [<URL>]    todo
+qs <DESCRIPTION>            todo"""
+
+
+def shifter():
+    pass
 
 
 def interactive(verbose: bool) -> bool:
@@ -28,21 +45,43 @@ def interactive(verbose: bool) -> bool:
     lines: bool = False
     try:
         input_string = input(NORMAL_PROMPT).strip()
-        while input_string.endswith("\\"):
-            lines = True
-            input_string = input_string[:-1] + '\n'
-            input_string += input(APPEND_PROMPT).strip()
-        if lines:
-            # shifter = QuickShifterLines(input_string.split("\n"))
-            shifter = RapidShifterLines(input_string.split("\n"))
-            shifter.show_all(verbose=verbose)
-        else:
-            # shifter = QuickShifter(input_string)
-            shifter = RapidShifter(input_string)
-            shifter.show_all(verbose=verbose)
+        cmd = input_string.split(' ')[0]
+        input_string = input_string[cmd.__len__() + 1:]
+        match cmd:
+            case "rs":
+                while input_string.endswith("\\"):
+                    lines = True
+                    input_string = input_string[:-1] + '\n'
+                    input_string += input(APPEND_PROMPT).strip()
+                if lines:
+                    shifter = RapidShifterLines(input_string.split("\n"))
+                    shifter.show_all(verbose=verbose)
+                else:
+                    shifter = RapidShifter(input_string)
+                    shifter.show_all(verbose=verbose)
+            case "qs":
+                while input_string.endswith("\\"):
+                    lines = True
+                    input_string = input_string[:-1] + '\n'
+                    input_string += input(APPEND_PROMPT).strip()
+                if lines:
+                    shifter = QuickShifterLines(input_string.split("\n"))
+                    shifter.show_all(verbose=verbose)
+                else:
+                    shifter = QuickShifter(input_string)
+                    shifter.show_all(verbose=verbose)
+            case "search" | "find":
+                raise NotImplementedError
+            case "help":
+                print(HELP)
+            case "exit" | "quit":
+                return False
+            case _:
+                print(f"{ERROR} 命令`{color(cmd, YELLOW)}`不存在")
+                print(f"{INFO} 请输入`{color("help", YELLOW)}`查看帮助")
     except (EOFError, KeyboardInterrupt):
         return False
-    return input_string != "exit"
+    return True
 
 
 def parse_file(file_name: str, verbose: bool, merge: bool):
@@ -97,7 +136,8 @@ if __name__ == "__main__":
     elif args.console:
         print(BANNER)
         print(parser.description)
-        print(f"请按 {color("CTRL+C/CTRL+D", YELLOW)} 退出")
+        print(f"请按输入 {color("exit/quit", YELLOW)} 退出")
+        print(f"或输入 {color("CTRL+C/CTRL+D", YELLOW)} 强制退出")
         while interactive(verbose=verbose):
             pass
     elif args.server:
