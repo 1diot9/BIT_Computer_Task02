@@ -77,7 +77,7 @@ class QuickShifter:
     def __len__(self) -> int:
         return len(self.shifts)
 
-    def show(self, verbose: bool = False):
+    def show_all(self, verbose: bool = False):
         if self.string != "":
             if verbose:
                 print(f"[{color(self.string, BOLD)}]:")
@@ -104,7 +104,7 @@ class QuickShifterLines:
     """
 
     def __init__(self, str_list: list[str], merge: bool = False) -> None:
-        self.lines = str_list
+        self.lines = list(map(lambda x: x.strip(), str_list))
         self.merge = merge
 
         self.lshifts: list[list[str]] = []
@@ -131,7 +131,7 @@ class QuickShifterLines:
             self.all_len = shifts.__len__()
             self.lshifts.append(shifts)
         else:
-            for line in self.lines:
+            for line in filter(lambda x:  x.__len__() != 0, self.lines):
                 line_shifter = QuickShifter(line)
                 self.all_len += line_shifter.__len__()
                 self.lshifts.append(line_shifter.shifts)
@@ -162,7 +162,6 @@ class QuickShifterLines:
         """显示所有移位序列
         :param verbose: 是否显示详细信息（默认否）
         :type verbose: bool = False
-
         """
         for line in range(self.__len__()):
             if verbose:
@@ -183,6 +182,7 @@ class QuickShifterIter:
     利用双端队列加速
 
     :param queue: 给定单词序列
+    :type queue: list[str]
     """
 
     def __init__(self, queue: list[str]) -> None:
