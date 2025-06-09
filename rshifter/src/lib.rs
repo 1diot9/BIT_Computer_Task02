@@ -56,7 +56,7 @@ fn rshifter(m: &Bound<'_, PyModule>) -> PyResult<()> {
 #[cfg(test)]
 mod test {
     use crate::RapidShifter;
-    use crate::RapidShifterLines;
+    //use crate::RapidShifterLines;
 
     use regex::Regex;
 
@@ -68,7 +68,7 @@ mod test {
 
     #[test]
     fn test2() {
-        let input: Vec<String> = [
+        let _: Vec<String> = [
             "aaa bbb ccc ddd",
             "a A p p b B a W R P",
             "A simple test sentence",

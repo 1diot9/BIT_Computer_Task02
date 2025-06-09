@@ -1,6 +1,7 @@
 pub const END: &str = "\x1b[0m";
 
 #[derive(Debug)]
+#[allow(unused)]
 pub enum Color {
     Red,
     Green,
