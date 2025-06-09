@@ -14,6 +14,8 @@ use crate::color::Color;
 use crate::Direction;
 use crate::RapidShifterIter;
 
+// TODO: 增加注释
+
 type Shift = Arc<Mutex<Vec<String>>>;
 
 const NONE: &str = "<None>";
@@ -174,7 +176,7 @@ impl RapidShifter {
         let shifts = self.shifts.as_ref().unwrap();
         let desc_len = self.desc.len();
 
-        if (all && self.url.as_ref().unwrap().contains(&pat))
+        if (all && self.url.as_ref().unwrap_or(&String::new()).contains(&pat))
             || (!pat.contains(" ") && self.desc.contains(&pat))
         {
             return Some((0..shifts.len()).collect());
@@ -240,20 +242,6 @@ impl RapidShifter {
             return Some((begin..end).collect());
         }
         */
-
-        // 01234567
-        //
-        // A B C D E F A B C D E F
-        //  "B C D"
-        //   n..(n + len - 1)
-        // "A " =>  1 => 0
-        //  B C D => ban 2 3 4 => 2
-        // " E F ..." 5 ..
-        //
-        // A B C D E F A B C D E F
-        //       " E F A B"
-        // "A B C D" => 3
-        // " E F A B" => none
     }
 
     #[pyo3(signature = (re, all=false))]

@@ -1,10 +1,11 @@
 from qshifter import QuickShifter, QuickShifterLines
-from color import color, RED, CYAN, BLUE, YELLOW, GREEN
+from color import color, RED, CYAN, BLUE, YELLOW, GREEN, RUST, PYTHON
 from rshifter import RapidShifter, RapidShifterLines
+from typing import Literal
 import argparse
 
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 BANNER: str = color(
     f"""\
@@ -19,69 +20,139 @@ BANNER: str = color(
     BLUE,
 )
 
-NORMAL_PROMPT = color("sft> ", GREEN)
-APPEND_PROMPT = color("+==> ", CYAN)
+NORMAL_PROMPT = color("cmd> ", GREEN)
+
+RUST_PROMPT = color("rs> ", RUST)
+PY_PROMPT = color("qs> ", PYTHON)
+
+SEARCH_PROMPT = color("search> ", CYAN)
+REGEX_PROMPT = color("regex> ", RED)
 
 INFO = color("[*]", BLUE)
 ERROR = color("[x]", RED)
 
-HELP = """\
-命令列表：
 
-help                        展示此帮助
-search|find <PATTERN>       todo
-quit|exit                   退出
+def process(input_string: str,
+            lines: bool,
+            verbose: bool = False,
+            merge: bool = False,
+            backend: Literal["rust", "python"] = "python"):
+    if lines:
+        input_lines = input_string.split("\n")
+        if backend == "rust":
+            shifter = RapidShifterLines(input_lines)
+            shifter.show_all(verbose=verbose)
+        else:
+            shifter = QuickShifterLines(input_lines)
+            shifter.show_all(verbose=verbose, merge=merge)
 
-rs <DESCRIPTION> [<URL>]    todo
-qs <DESCRIPTION>            todo"""
+    else:
+        if backend == "rust":
+            shifter = RapidShifter(input_string)
+        else:
+            shifter = QuickShifter(input_string)
+
+        shifter.show_all(verbose=verbose)
+
+    return shifter
 
 
-def shifter():
-    pass
+def console():
+    parser = argparse.ArgumentParser(
+        prog=NORMAL_PROMPT,
+        description="将输入的字符串按单词循环移位", exit_on_error=False, add_help=False)
+    parser.add_argument(
+        "version", action="store_true", help="显示版本信息")
+
+    subparsers = parser.add_subparsers(title="命令列表", dest="subcommand")
+    subparsers.add_parser("exit", help="退出")
+
+    help = subparsers.add_parser("help", help="显示帮助")
+    help.add_argument("command", type=str, nargs='?',
+                      default="", help="需要帮助的命令")
+    # TODO: 增加不同命令的帮助界面
+
+    rust = subparsers.add_parser("rs", help="使用rust后端循环移位（支持搜索）")
+    rust.add_argument("-v", "--verbose", action="store_true", help="详细模式")
+
+    python = subparsers.add_parser("qs", help="使用python后端循环移位")
+    python.add_argument("-v", "--verbose", action="store_true", help="详细模式")
+    python.add_argument("-m", "--merge", action="store_true", help="合并多行输入")
+
+    search = subparsers.add_parser("search", help="搜索上一次循环移位结果")
+    search.add_argument("-r", "--regex", action="store_false", help="使用正则匹配")
+    search.add_argument("-a", "--all", action="store_false", help="搜索包括网址URL")
+
+    print(BANNER)
+    print(parser.description)
+    print(f"请按输入 {color("exit", YELLOW)} 退出")
+    print(f"或输入 {color("CTRL+C/CTRL+D", YELLOW)} 强制退出")
+
+    latest = None
+    ret = True
+    while ret:
+        ret, latest = interactive(parser=parser, lastest=latest)
 
 
-def interactive(verbose: bool) -> bool:
+def interactive(parser, lastest: object) -> (bool, object):
     input_string: str = ""
     lines: bool = False
+
     try:
-        input_string = input(NORMAL_PROMPT).strip()
-        cmd = input_string.split(' ')[0]
-        input_string = input_string[cmd.__len__() + 1:]
-        match cmd:
-            case "rs":
-                while input_string.endswith("\\"):
-                    lines = True
-                    input_string = input_string[:-1] + '\n'
-                    input_string += input(APPEND_PROMPT).strip()
-                if lines:
-                    shifter = RapidShifterLines(input_string.split("\n"))
-                    shifter.show_all(verbose=verbose)
-                else:
-                    shifter = RapidShifter(input_string)
-                    shifter.show_all(verbose=verbose)
-            case "qs":
-                while input_string.endswith("\\"):
-                    lines = True
-                    input_string = input_string[:-1] + '\n'
-                    input_string += input(APPEND_PROMPT).strip()
-                if lines:
-                    shifter = QuickShifterLines(input_string.split("\n"))
-                    shifter.show_all(verbose=verbose)
-                else:
-                    shifter = QuickShifter(input_string)
-                    shifter.show_all(verbose=verbose)
-            case "search" | "find":
-                raise NotImplementedError
+        inputs = input(NORMAL_PROMPT).strip()
+
+        args = parser.parse_args(inputs.split())
+
+        match args.subcommand:
             case "help":
-                print(HELP)
-            case "exit" | "quit":
-                return False
+                parser.print_help()
+            case "rs":
+                input_string = input(RUST_PROMPT).strip()
+                while input_string.endswith("\\"):
+                    lines = True
+                    input_string = input_string[:-1] + '\n'
+                    input_string += input(RUST_PROMPT).strip()
+                lastest = process(input_string, lines=lines,
+                                  verbose=args.verbose, backend="rust")
+
+            case "qs":
+                input_string = input(PY_PROMPT).strip()
+                while input_string.endswith("\\"):
+                    lines = True
+                    input_string = input_string[:-1] + '\n'
+                    input_string += input(PY_PROMPT).strip()
+                lastest = process(input_string, lines=lines,
+                                  verbose=args.verbose, merge=args.merge,
+                                  backend="python")
+            case "search":
+                if isinstance(lastest, (RapidShifter, RapidShifterLines)):
+                    result = []
+                    pat = re = ""
+                    if args.regex:
+                        pat = input(SEARCH_PROMPT).strip()
+                        result = lastest.search(pat=pat, all=args.all)
+                    else:
+                        re = input(REGEX_PROMPT).strip()
+                        result = lastest.regex_search(re=re, all=args.all)
+                    if result is None:
+                        print(f"{ERROR} 未找到匹配序列： {pat or re}")
+                    else:
+                        print(f"匹配序列序号：{list(map(lambda x: x + 1, result))}")
+                        for res in result:
+                            print(f"[{res + 1}] {lastest[res]}")
+                else:
+                    print(f"{ERROR} 类型 {type(lastest)} 目前不支持搜索或为空")
+
+            case "exit":
+                return (False, None)
             case _:
-                print(f"{ERROR} 命令`{color(cmd, YELLOW)}`不存在")
                 print(f"{INFO} 请输入`{color("help", YELLOW)}`查看帮助")
+    except argparse.ArgumentError as e:
+        print(f"{ERROR} {color(e.message, YELLOW)}")
+        print(f"{INFO} 请输入`{color("help", YELLOW)}`查看帮助")
     except (EOFError, KeyboardInterrupt):
-        return False
-    return True
+        return (False, None)
+    return (True, lastest)
 
 
 def parse_file(file_name: str, verbose: bool, merge: bool):
@@ -106,6 +177,10 @@ if __name__ == "__main__":
     parser.add_argument("-V", "--version", action="store_true", help="显示版本信息")
     parser.add_argument("-m", "--merge", action="store_true", help="合并多行输入")
     parser.add_argument("-v", "--verbose", action="store_true", help="详细模式")
+    parser.add_argument("--search", type=str, help="搜索特定字符串")
+    parser.add_argument("--regex-search", type=str, help="使用正则搜索特定字符串")
+
+    # TODO: 增加处理命令行参数搜索的逻辑
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-p", "--input", type=str, help="需要循环移位的字符串")
@@ -134,12 +209,7 @@ if __name__ == "__main__":
     elif args.file:
         parse_file(args.file, verbose=verbose, merge=merge)
     elif args.console:
-        print(BANNER)
-        print(parser.description)
-        print(f"请按输入 {color("exit/quit", YELLOW)} 退出")
-        print(f"或输入 {color("CTRL+C/CTRL+D", YELLOW)} 强制退出")
-        while interactive(verbose=verbose):
-            pass
+        console()
     elif args.server:
         from app import app
 

@@ -1,26 +1,26 @@
 pub const END: &str = "\x1b[0m";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused)]
 pub enum Color {
-    Red,
+    /// 红色
+    Red = 31,
+    /// 绿色
     Green,
+    /// 黄色
     Yellow,
+    /// 蓝色
     Blue,
+    /// 紫色
     Purple,
+    /// 青色
     Cyan,
 }
 
 impl Color {
     pub fn color(&self, string: &str) -> String {
-        let clr = match self {
-            Color::Red => "31",
-            Color::Green => "32",
-            Color::Yellow => "33",
-            Color::Blue => "34",
-            Color::Purple => "35",
-            Color::Cyan => "36",
-        };
+        // HACK: That's crazy but it works!
+        let clr = (*self).clone() as usize;
 
         format!("\x1b[{clr}m{string}{END}")
     }

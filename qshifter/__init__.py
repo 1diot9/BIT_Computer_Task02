@@ -1,10 +1,11 @@
 from typing import Self
 from collections import deque
 from functools import cmp_to_key, cache
-from string import ascii_letters
 from color import *
 
 MAGIC_LEN = 1000
+
+# TODO: 增加搜索功能，格式化输出
 
 
 class QuickShifter:

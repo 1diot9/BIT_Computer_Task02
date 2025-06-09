@@ -56,6 +56,7 @@ class QshifterTest:
             self.push(func)
 
     def push(self, func):
+        """增加测试函数"""
         if callable(func) and getattr(self, func.__name__, None) is None:
             self.__setattr__(func.__name__, func)
 
@@ -253,6 +254,19 @@ def test_rapidshifter():
 
 
 def analyze(browser: bool = False):
+    """装饰器analyze
+    用于进行性能分析
+    用法：
+    ```
+    @analyze(browser=True)
+    def func():
+        pass
+    ```
+    :param func: 性能分析函数
+    :param browser: 是否用浏览器显示结果
+    :type browser: bool
+    """
+
     def analyze_func(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
