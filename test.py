@@ -4,6 +4,8 @@ from color import color, RED, GREEN
 from functools import wraps
 from pyinstrument import Profiler
 
+# TODO: 更多的测试
+
 
 def test(func):
     """装饰器test
@@ -17,7 +19,6 @@ def test(func):
     :param func: 测试函数
     """
 
-    # TODO: 性能测试
     @wraps(func)
     def wrapper(*args, **kwargs) -> bool:
         name = func.__name__
@@ -52,8 +53,12 @@ class QshifterTest:
 
         # 通过反射导入外部函数
         for func in func_list:
-            if callable(func) and getattr(self, func.__name__, None) is None:
-                self.__setattr__(func.__name__, func)
+            self.push(func)
+
+    def push(self, func):
+        """增加测试函数"""
+        if callable(func) and getattr(self, func.__name__, None) is None:
+            self.__setattr__(func.__name__, func)
 
     def run_all_tests(self):
         """通过反射运行所有测试函数并统计信息"""
@@ -146,8 +151,28 @@ def test_bigdata():
     random_str = "".join(
         random.choice(string.ascii_letters + " ") for _ in range(100_000)
     )
-    QuickShifter(random_str)
-    RapidShifter(random_str).shifts()
+    # print(random_str)
+    # QuickShifter(random_str)
+    rs = RapidShifter(random_str)
+    rs.process()
+    _ = rs.shifts()[0]
+    # RapidShifter(random_str).qshifts(16)
+
+
+@test
+def test_bigtimes():
+    import random
+    import string
+
+    # 生成一个100_000字符长的随机字符串压力测试
+    for _ in range(100):
+        random_str = "".join(
+            random.choice(string.ascii_letters + " ") for _ in range(10000)
+        )
+    # print(random_str)
+        QuickShifter(random_str)
+        RapidShifter(random_str).process()
+        # RapidShifter(random_str).qshifts(16)
 
 
 @test
@@ -157,9 +182,9 @@ def test_biglist():
 
     random_str = []
     # 生成一个100_000字符长的随机字符串压力测试
-    for _ in range(100):
+    for _ in range(1000):
         random_str += ["".join(
-            random.choice(string.ascii_letters + " ") for _ in range(2000)
+            random.choice(string.ascii_letters + " ") for _ in range(50)
         )]
 
     QuickShifterLines(random_str, merge=True)
@@ -189,20 +214,92 @@ def test_sometext():
     assert tst.all_len == 90 * 100
 
 
-# TEST: 测试部分
-if __name__ == "__main__":
-    profiler = Profiler()
-    profiler.start()
+@test
+def test_search():
+    tst2 = RapidShifter("Aspera Pipe process Zenic Brute http://www.baidu.com")
+    # tst2.show_all(verbose=True)
+    # print(tst2.search("www", all=True))
+    # print(tst2.search("www"))
 
+    assert (tst2.search("www", all=True) == [0, 1, 2, 3, 4])
+    assert (tst2.search("www") is None)
+
+
+@test
+def test_search2():
+    tst2 = RapidShifter("Aspera Pipe process Zenic Brute http://www.baidu.com")
+    tst2.show_all(verbose=True)
+    shifts = tst2.shifts()
+
+    matches = tst2.search("Pipe ")
+
+    # print(matches)
+    # print([shifts[x] for x in matches])
+
+    res = [shifts[x] for x in matches]
+
+    assert (matches == [0, 1, 3, 4])
+    assert (res[0] == 'Aspera Pipe process Zenic Brute')
+
+
+@test
+def test_rapidshifter():
+    tst1 = RapidShifterLines(
+        ["A a B p P b Z z http://www.google.com",
+         "a A p p b B a W R P https://127.0.0.1",
+         "A simple test sentence with no https",])
+    # tst1.show_all(verbose=True)
+
+    assert ("A simple test sentence with no https <None>" == tst1[5])
+
+
+def analyze(browser: bool = False):
+    """装饰器analyze
+    用于进行性能分析
+    用法：
+    ```
+    @analyze(browser=True)
+    def func():
+        pass
+    ```
+    :param func: 性能分析函数
+    :param browser: 是否用浏览器显示结果
+    :type browser: bool
+    """
+
+    def analyze_func(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            profiler = Profiler()
+            profiler.start()
+
+            func(*args, **kwargs)
+
+            profiler.stop()
+            if browser:
+                profiler.open_in_browser()
+            else:
+                profiler.print()
+
+        return wrapper
+    return analyze_func
+
+
+@analyze(browser=False)
+def main():
     # TEST: 运行所有测试
     qshifer_test = QshifterTest(
-        [test_sort_2, test_lines, test_bigdata, test_sometext, test_biglist])
+        [test_sort_2, test_lines, test_search,
+            test_sometext, test_rapidshifter]
+    )
+
+    qshifer_test.push(test_bigdata)
+    qshifer_test.push(test_biglist)
+    qshifer_test.push(test_bigtimes)
+
     qshifer_test.run_all_tests()
 
-    tst = RapidShifterLines(
-        ["A a B p P b Z z", "a A p p b B a W R P", "A simple test sentence",])
 
-    print(tst.shifts())
-
-    profiler.stop()
-    profiler.print()
+# TEST: 测试部分
+if __name__ == "__main__":
+    main()

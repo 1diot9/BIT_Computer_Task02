@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 uploads/*.txt
 .pptx
+.gdb_history
