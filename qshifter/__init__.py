@@ -13,6 +13,7 @@ class QuickShifter:
     通过迭代器来产生所有需要的序列
 
     :param string: 给定字符串
+    :type string: str
     """
 
     def __init__(self, string: str) -> None:

@@ -1,23 +1,75 @@
+//! 模块rsifter的lib包
+//!
+//! 提供迭代器[`RapidShifterIter`]及其实现
+//!
+//! 注册Python类[`RapidShifter`]和[`RapidShifterLines`]，处于Python模块`rshifter`下
+//! 将Rust结构体(`struct`)注册为Python类(`class`)
+//!
+//! # Example:
+//!
+//! 以下为Python示例代码
+//! ```python
+//! from rshifter import RapidShifter, RapidShifterLines
+//!
+//! tst1 = RapidShifter("aa aA ab aB ap aP")
+//! res1 = [
+//!     "aa aA ab aB ap aP",
+//!     "aA ab aB ap aP aa",
+//!     "ab aB ap aP aa aA",
+//!     "aB ap aP aa aA ab",
+//!     "ap aP aa aA ab aB",
+//!     "aP aa aA ab aB ap",
+//! ]
+//! assert tst1.shifts() == res1
+//!
+//! tst2 = QuickShifterLines(
+//!     ["A a B b", "Another yet new string",
+//!     "Once upon a time", "It is my shift now"],
+//! )
+//!
+//! res2 = [
+//!     "a B b A",
+//!     "A a B b",
+//!     "b A a B",
+//!     "B b A a",
+//! ]
+//! assert tst2[0] == res2
+//! ```
 use crate::shifter::{RapidShifter, RapidShifterLines};
 use pyo3::prelude::*;
 use std::collections::VecDeque;
 
-mod color;
-mod shifter;
+pub mod color;
+pub mod shifter;
 
-enum Direction {
+/// 移位方向枚举
+/// 用于迭代器[`RapidShifterIter`]，来确定移位的方向
+pub enum Direction {
+    /// 左方向，使用方法[`VecDeque::rotate_left`]
     Left,
+    /// 右方向，使用方法[`VecDeque::rotate_right`]
     Right,
 }
 
-struct RapidShifterIter<'a> {
+/// 迭代器`RapidShifterIter`
+/// 用于产生所有的移位序列，在结构体[`RapidShifter`]和[`RapidShifterLines`]中使用
+///
+/// 通过双端队列[`VecDeque`]来高效操作，`direction`用来确定移位方向
+/// `direction`类型为[`Direction`]，有两种选择
+///
+/// > 当`length`与`queue`的长度一样时，即使方向不同，产生的移位序列是一样的
+pub struct RapidShifterIter<'a> {
     queue: VecDeque<&'a str>,
     length: usize,
     direction: Direction,
 }
 
 impl RapidShifterIter<'_> {
-    fn new(input: Vec<&str>, length: Option<usize>, direction: Direction) -> RapidShifterIter {
+    /// 初始化迭代器
+    /// `input`类型为[`Vec`]，会自动转换为双端队列[`VecDeque`]
+    /// `length`类型为[`Option<usize>`]，当值为[`None`]时，产生的移位序列内容和方向无关
+    /// `direction`类型为[`Direction`]，其值用于决定采用方法[`VecDeque::rotate_left`]还是[`VecDeque::rotate_right`]进行移位
+    pub fn new(input: Vec<&str>, length: Option<usize>, direction: Direction) -> RapidShifterIter {
         let length = length.unwrap_or(input.len());
         RapidShifterIter {
             queue: VecDeque::from(input),
@@ -45,7 +97,6 @@ impl Iterator for RapidShifterIter<'_> {
     }
 }
 
-/// A Python module implemented in Rust.
 #[pymodule]
 fn rshifter(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RapidShifter>()?;

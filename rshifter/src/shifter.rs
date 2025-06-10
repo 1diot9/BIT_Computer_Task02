@@ -1,3 +1,6 @@
+//! 循环移位器[`RapidShifter`]与[`RapidShifterLines`]的实现模块
+//! 提供移位产生/搜索等一系列功能
+
 use std::arch::asm;
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -14,10 +17,11 @@ use crate::color::Color;
 use crate::Direction;
 use crate::RapidShifterIter;
 
-// TODO: 增加注释
+// TODO: 增加搜索高亮显示功能
 
 type Shift = Arc<Mutex<Vec<String>>>;
 
+/// 若未匹配到URL，使用该字符串代替
 const NONE: &str = "<None>";
 
 create_exception!(rshifter, PyRegexSyntaxError, pyo3::exceptions::PyException);
@@ -35,11 +39,15 @@ macro_rules! lazy_check {
     };
 }
 
+/// 移位序列排序函数
+/// 可以按"a > A > b > B > c > C ..."顺序进行排序
+/// 原理参见Python版本注释
 fn magic(x: &str, y: &str) -> Ordering {
     let mut iter = zip(x.as_bytes(), y.as_bytes());
     let (mut key_x, mut key_y): (u8, u8);
     loop {
         if let Some((dx, dy)) = iter.next() {
+            // HACK: That works, see also in python version
             // SAFETY: only read dx & dy
             unsafe {
                 asm!(
@@ -64,7 +72,11 @@ fn magic(x: &str, y: &str) -> Ordering {
     }
 }
 
-/// RapidShifter
+/// 快速移位序列结构体`RapidShifter`
+/// 存储描述`desc`，URL`url`与排序后移位序列`shifts`
+///
+/// 使用[`lazy_check!`]宏进行惰性处理，在需要时才会进行移位排序，产生开销
+/// 也可以提前调用方法[`RapidShifter::process`]来产生所有移位序列
 #[pyclass]
 #[derive(Debug)]
 pub struct RapidShifter {
@@ -77,11 +89,14 @@ pub struct RapidShifter {
 }
 
 // TODO: use mark-based sort and optimize search
-// add `search_show`
+// add `fn search_show()`
 
-/// RapidShifter
 #[pymethods]
 impl RapidShifter {
+    /// 初始化函数
+    /// 参数`desc`为给定字符串
+    /// 使用正则表达式尝试匹配URL，若匹配失败则设置URL为[`None`]
+    /// 仅匹配最后一个单词块（以' '作为分隔符）
     #[new]
     #[pyo3(signature = (desc, /))]
     pub fn new(desc: String) -> Self {
@@ -104,12 +119,16 @@ impl RapidShifter {
         }
     }
 
+    /// 移位排序处理函数
+    /// 调用仅会生成所有移位序列并排序，不会返回值
+    /// 需要移位序列参见函数[`RapidShifter::\_\_getitem\_\_`]或[`RapidShifter::shifts`]
     pub fn process(&mut self) {
         let mut shifts = self.iter().collect::<Vec<String>>();
         shifts.sort_unstable_by(|x, y| magic(x, y));
         self.shifts = Some(shifts);
     }
 
+    /// 得到特定的循环序列
     pub fn __getitem__(&mut self, index: usize) -> PyResult<String> {
         lazy_check!(self.shifts, self.process());
 
@@ -128,12 +147,14 @@ impl RapidShifter {
         Ok(res)
     }
 
+    /// 得到所有的循环序列
     pub fn shifts(&mut self) -> &Vec<String> {
         lazy_check!(self.shifts, self.process());
 
         self.shifts.as_ref().unwrap()
     }
 
+    /// 展示特定列
     pub fn show_line(&mut self, line: usize) -> PyResult<()> {
         lazy_check!(self.shifts, self.process());
 
@@ -151,6 +172,8 @@ impl RapidShifter {
         Ok(())
     }
 
+    /// 展示所有列
+    /// 参数`verbose`为是否详细展示
     #[pyo3(signature = (verbose=false))]
     pub fn show_all(&mut self, verbose: bool) {
         lazy_check!(self.shifts, self.process());
@@ -169,6 +192,8 @@ impl RapidShifter {
         }
     }
 
+    /// 搜索特定字符串
+    /// 参数`all`设置搜索内容是否包括URL
     #[pyo3(signature = (pat, all=false))]
     pub fn search(&mut self, pat: String, all: bool) -> Option<Vec<usize>> {
         lazy_check!(self.shifts, self.process());
@@ -184,15 +209,15 @@ impl RapidShifter {
 
         let pat_len = pat.len();
 
-        if desc_len <= pat_len {
-            return None;
-        }
-
         let url = if all {
             &format!(" {}", self.url.as_ref().map_or(NONE, |s| s.as_str()))
         } else {
             ""
         };
+
+        if (!all && desc_len <= pat_len) || (all && desc_len + url.len() < pat_len) {
+            return None;
+        }
 
         let mut res: Vec<usize> = Vec::new();
 
@@ -244,6 +269,8 @@ impl RapidShifter {
         */
     }
 
+    /// 通过正则表达式搜索特定字符串
+    /// 参数`all`设置搜索内容是否包括URL
     #[pyo3(signature = (re, all=false))]
     pub fn regex_search(&mut self, re: &str, all: bool) -> PyResult<Option<Vec<usize>>> {
         lazy_check!(self.shifts, self.process());
@@ -287,6 +314,9 @@ impl RapidShifter {
         }
     }
 
+    /// 并发生成循环移位序列
+    /// 理论上应该更快，但是比Python还慢
+    /// 目前废弃(deprecated)处理
     #[deprecated]
     pub fn qshifts(&self, py: Python<'_>) -> Vec<String> {
         py.allow_threads(move || {
@@ -411,10 +441,13 @@ impl RapidShifter {
     }
 }
 
+/// [`RapidShifterLines`]并发设置的最大线程数
 const THREADS: usize = 16;
 
 type UrlID = u64;
 
+/// 接受的行参数类型
+/// 字段`url_id`通过[`RapidShifterLines::urlmap`]对应着一个URL
 #[derive(Clone)]
 struct Item {
     desc: String,
@@ -427,6 +460,13 @@ impl Item {
     }
 }
 
+/// 多行循环移位结构体`RapidShifterLines`
+///
+/// 通过哈希([`HashMap<UrlID, String>`])存储URL与每一行移位序列的关系
+/// 通过宏[`lazy_check!`]惰性排序
+/// 效果同[`RapidShifter`]
+///
+/// > 注意：本结构体目前不支持`merge`参数，默认行为是合并操作
 #[pyclass]
 pub struct RapidShifterLines {
     item: Vec<Item>,
@@ -437,6 +477,10 @@ pub struct RapidShifterLines {
 
 #[pymethods]
 impl RapidShifterLines {
+    /// 初始化函数
+    /// 参数`item`为给定字符串
+    /// 使用正则表达式尝试匹配URL，若匹配失败则设置URL为[`None`]
+    /// 仅匹配最后一个单词块（以' '作为分隔符）
     #[new]
     pub fn new(item: Vec<String>) -> Self {
         let re = Regex::new(r"^(https?|ftp)://[^\s/$.?#].[^\s]*$").unwrap();
@@ -466,6 +510,11 @@ impl RapidShifterLines {
         }
     }
 
+    /// 移位排序处理函数
+    ///
+    /// 通过**并发**来加速移位过程，可以同时运行多个移位迭代器
+    /// 调用仅会生成所有移位序列并排序，不会返回值
+    /// 需要移位序列参见函数[`RapidShifterLines::\_\_getitem\_\_`]或[`RapidShifterLines::shifts`]
     pub fn process(&mut self, py: Python<'_>) {
         // PERF: Use concurency to optimize it
         // Max threads is set to 16
@@ -504,6 +553,7 @@ impl RapidShifterLines {
         })
     }
 
+    /// 得到特定的循环序列
     pub fn __getitem__(&mut self, py: Python<'_>, index: usize) -> PyResult<String> {
         lazy_check!(self.shifts, self.process(py));
 
@@ -525,6 +575,7 @@ impl RapidShifterLines {
         Ok(res)
     }
 
+    /// 得到所有的循环序列
     pub fn shifts(&mut self, py: Python<'_>) -> Vec<&String> {
         lazy_check!(self.shifts, self.process(py));
 
@@ -536,6 +587,7 @@ impl RapidShifterLines {
             .collect()
     }
 
+    /// 展示特定列
     pub fn show_line(&mut self, py: Python<'_>, line: usize) -> PyResult<()> {
         lazy_check!(self.shifts, self.process(py));
 
@@ -557,6 +609,8 @@ impl RapidShifterLines {
         Ok(())
     }
 
+    /// 展示所有列
+    /// 参数`verbose`为是否详细展示
     #[pyo3(signature = (verbose=false))]
     pub fn show_all(&mut self, py: Python<'_>, verbose: bool) {
         lazy_check!(self.shifts, self.process(py));
@@ -579,6 +633,8 @@ impl RapidShifterLines {
         }
     }
 
+    /// 搜索特定字符串
+    /// 参数`all`设置搜索内容是否包括URL
     #[pyo3(signature = (pat, all=false))]
     pub fn search(&mut self, py: Python<'_>, pat: String, all: bool) -> Option<Vec<usize>> {
         // TODO: optimize this
@@ -658,6 +714,8 @@ impl RapidShifterLines {
         // " E F A B" => none
     }
 
+    /// 通过正则表达式搜索特定字符串
+    /// 参数`all`设置搜索内容是否包括URL
     #[pyo3(signature = (re, all=false))]
     pub fn regex_search(
         &mut self,

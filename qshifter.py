@@ -5,7 +5,7 @@ from typing import Literal
 import argparse
 
 
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 
 BANNER: str = color(
     f"""\
@@ -28,8 +28,9 @@ PY_PROMPT = color("qs> ", PYTHON)
 SEARCH_PROMPT = color("search> ", CYAN)
 REGEX_PROMPT = color("regex> ", RED)
 
+OK = color("[+]", GREEN)
 INFO = color("[*]", BLUE)
-ERROR = color("[x]", RED)
+ERROR = color("[-]", RED)
 
 
 def process(input_string: str,
@@ -74,14 +75,17 @@ def console():
 
     rust = subparsers.add_parser("rs", help="使用rust后端循环移位（支持搜索）")
     rust.add_argument("-v", "--verbose", action="store_true", help="详细模式")
+    rust.add_argument("input", type=str, nargs='*', help="输入字符串")
 
     python = subparsers.add_parser("qs", help="使用python后端循环移位")
     python.add_argument("-v", "--verbose", action="store_true", help="详细模式")
     python.add_argument("-m", "--merge", action="store_true", help="合并多行输入")
+    python.add_argument("input", type=str, nargs='*', help="输入字符串")
 
     search = subparsers.add_parser("search", help="搜索上一次循环移位结果")
     search.add_argument("-r", "--regex", action="store_false", help="使用正则匹配")
-    search.add_argument("-a", "--all", action="store_false", help="搜索包括网址URL")
+    search.add_argument("-a", "--all", action="store_true", help="搜索包括网址URL")
+    search.add_argument("pat", type=str, nargs='*', help="查找字符串")
 
     print(BANNER)
     print(parser.description)
@@ -96,7 +100,9 @@ def console():
 
 def interactive(parser, lastest: object) -> (bool, object):
     input_string: str = ""
-    lines: bool = False
+    backend: str = ""
+    shifter = lines = False
+    verbose = merge = False
 
     try:
         inputs = input(NORMAL_PROMPT).strip()
@@ -107,37 +113,36 @@ def interactive(parser, lastest: object) -> (bool, object):
             case "help":
                 parser.print_help()
             case "rs":
-                input_string = input(RUST_PROMPT).strip()
-                while input_string.endswith("\\"):
-                    lines = True
-                    input_string = input_string[:-1] + '\n'
-                    input_string += input(RUST_PROMPT).strip()
-                lastest = process(input_string, lines=lines,
-                                  verbose=args.verbose, backend="rust")
+                shifter = True
+                backend = "rust"
 
+                verbose = args.verbose
             case "qs":
-                input_string = input(PY_PROMPT).strip()
-                while input_string.endswith("\\"):
-                    lines = True
-                    input_string = input_string[:-1] + '\n'
-                    input_string += input(PY_PROMPT).strip()
-                lastest = process(input_string, lines=lines,
-                                  verbose=args.verbose, merge=args.merge,
-                                  backend="python")
+                shifter = True
+                backend = "python"
+
+                verbose = args.verbose
+                merge = args.merge
             case "search":
                 if isinstance(lastest, (RapidShifter, RapidShifterLines)):
                     result = []
                     pat = re = ""
+                    param = " ".join(args.pat)
+                    use_interact = args.pat.__len__() == 0
                     if args.regex:
-                        pat = input(SEARCH_PROMPT).strip()
+                        pat = input(SEARCH_PROMPT).strip(
+                        ) if use_interact else param
                         result = lastest.search(pat=pat, all=args.all)
                     else:
-                        re = input(REGEX_PROMPT).strip()
+                        re = input(REGEX_PROMPT).strip(
+                        ) if use_interact else param
                         result = lastest.regex_search(re=re, all=args.all)
+
+                    print(f"{INFO} 搜索字符串\"{pat or re}\"")
                     if result is None:
                         print(f"{ERROR} 未找到匹配序列： {pat or re}")
                     else:
-                        print(f"匹配序列序号：{list(map(lambda x: x + 1, result))}")
+                        print(f"{OK} 匹配序列序号：{list(map(lambda x: x + 1, result))}")
                         for res in result:
                             print(f"[{res + 1}] {lastest[res]}")
                 else:
@@ -147,6 +152,23 @@ def interactive(parser, lastest: object) -> (bool, object):
                 return (False, None)
             case _:
                 print(f"{INFO} 请输入`{color("help", YELLOW)}`查看帮助")
+
+        if not shifter:
+            return (True, lastest)
+
+        param = args.input
+        if param.__len__() != 0:
+            input_string = " ".join(param)
+            lastest = process(input_string, lines=False,
+                              verbose=verbose, backend=backend)
+        else:
+            input_string = input(RUST_PROMPT).strip()
+            while input_string.endswith("\\"):
+                lines = True
+                input_string = input_string[:-1] + '\n'
+                input_string += input(RUST_PROMPT).strip()
+            lastest = process(input_string, lines=lines, merge=merge,
+                              verbose=verbose, backend=backend)
     except argparse.ArgumentError as e:
         print(f"{ERROR} {color(e.message, YELLOW)}")
         print(f"{INFO} 请输入`{color("help", YELLOW)}`查看帮助")
