@@ -69,6 +69,7 @@ impl RapidShifterIter<'_> {
     /// `input`类型为[`Vec`]，会自动转换为双端队列[`VecDeque`]
     /// `length`类型为[`Option<usize>`]，当值为[`None`]时，产生的移位序列内容和方向无关
     /// `direction`类型为[`Direction`]，其值用于决定采用方法[`VecDeque::rotate_left`]还是[`VecDeque::rotate_right`]进行移位
+    #[inline]
     pub fn new(input: Vec<&str>, length: Option<usize>, direction: Direction) -> RapidShifterIter {
         let length = length.unwrap_or(input.len());
         RapidShifterIter {

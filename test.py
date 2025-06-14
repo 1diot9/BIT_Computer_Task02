@@ -152,11 +152,11 @@ def test_bigdata():
         random.choice(string.ascii_letters + " ") for _ in range(100_000)
     )
     # print(random_str)
-    # QuickShifter(random_str)
-    rs = RapidShifter(random_str)
-    rs.process()
-    _ = rs.shifts()[0]
-    # RapidShifter(random_str).qshifts(16)
+    QuickShifter(random_str)
+    # rs = RapidShifter(random_str)
+    # rs.process()
+    # _ = rs[0]
+    # RapidShifter(random_str).qshifts()
 
 
 @test
@@ -184,11 +184,11 @@ def test_biglist():
     # 生成一个100_000字符长的随机字符串压力测试
     for _ in range(1000):
         random_str += ["".join(
-            random.choice(string.ascii_letters + " ") for _ in range(50)
+            random.choice(string.ascii_letters + " ") for _ in range(5000)
         )]
 
     QuickShifterLines(random_str, merge=True)
-    RapidShifterLines(random_str).shifts()
+    RapidShifterLines(random_str).process()
 
 
 @test
@@ -292,10 +292,14 @@ def main():
         [test_sort_2, test_lines, test_search,
             test_sometext, test_rapidshifter]
     )
+    qshifer_test.push(test_biglist)
+    qshifer_test.push(test_bigdata)
+    qshifer_test.push(test_bigtimes)
+    '''
+    qshifer_test = QshifterTest()
 
     qshifer_test.push(test_bigdata)
-    qshifer_test.push(test_biglist)
-    qshifer_test.push(test_bigtimes)
+    '''
 
     qshifer_test.run_all_tests()
 
