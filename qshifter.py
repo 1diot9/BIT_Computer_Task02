@@ -182,7 +182,8 @@ def parse_file(file_name: str, verbose: bool, merge: bool):
         with open(file_name, "r") as f:
             lines: list[str] = f.readlines()
             lines = [line.strip() for line in lines]
-            shifter = QuickShifterLines(lines, merge=merge)
+            # shifter = QuickShifterLines(lines, merge=merge)
+            shifter = RapidShifterLines(lines)
             shifter.show_all(verbose=verbose)
     except FileNotFoundError as e:
         print(e)

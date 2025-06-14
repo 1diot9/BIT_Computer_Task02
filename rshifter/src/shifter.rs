@@ -23,6 +23,7 @@ type Shift = Arc<Mutex<Vec<String>>>;
 
 /// 若未匹配到URL，使用该字符串代替
 const NONE: &str = "<None>";
+const URL_RE: &str = r"^(https?|ftp)://[^\s/$.?#].[^\s]*$";
 
 create_exception!(rshifter, PyRegexSyntaxError, pyo3::exceptions::PyException);
 create_exception!(
@@ -42,6 +43,7 @@ macro_rules! lazy_check {
 /// 移位序列排序函数
 /// 可以按"a > A > b > B > c > C ..."顺序进行排序
 /// 原理参见Python版本注释
+#[inline(always)]
 fn magic(x: &str, y: &str) -> Ordering {
     let mut iter = zip(x.as_bytes(), y.as_bytes());
     let (mut key_x, mut key_y): (u8, u8);
@@ -75,7 +77,7 @@ fn magic(x: &str, y: &str) -> Ordering {
 /// 快速移位序列结构体`RapidShifter`
 /// 存储描述`desc`，URL`url`与排序后移位序列`shifts`
 ///
-/// 使用[`lazy_check!`]宏进行惰性处理，在需要时才会进行移位排序，产生开销
+/// 使用[`lazy_check`]宏进行惰性处理，在需要时才会进行移位排序，产生开销
 /// 也可以提前调用方法[`RapidShifter::process`]来产生所有移位序列
 #[pyclass]
 #[derive(Debug)]
@@ -121,7 +123,8 @@ impl RapidShifter {
 
     /// 移位排序处理函数
     /// 调用仅会生成所有移位序列并排序，不会返回值
-    /// 需要移位序列参见函数[`RapidShifter::\_\_getitem\_\_`]或[`RapidShifter::shifts`]
+    /// 需要移位序列参见函数[`RapidShifter::__getitem__`]或[`RapidShifter::shifts`]
+    #[inline]
     pub fn process(&mut self) {
         let mut shifts = self.iter().collect::<Vec<String>>();
         shifts.sort_unstable_by(|x, y| magic(x, y));
@@ -233,7 +236,7 @@ impl RapidShifter {
             Some(res)
         }
 
-        // TODO: Fix this
+        // FIXME: Fix this
         /*
         let double = format!("{desc} {desc}", desc = &self.desc);
 
@@ -318,7 +321,7 @@ impl RapidShifter {
     /// 理论上应该更快，但是比Python还慢
     /// 目前废弃(deprecated)处理
     #[deprecated]
-    pub fn qshifts(&self, py: Python<'_>) -> Vec<String> {
+    pub fn qshifts(&mut self, py: Python<'_>) {
         py.allow_threads(move || {
             // PERF: Use concurency to "optimize" it
             // But I find it even slowly than Python ??? why???
@@ -426,7 +429,7 @@ impl RapidShifter {
 
             let mut result = (*result.lock().unwrap()).to_owned();
             result.sort_unstable_by(|x, y| magic(x, y));
-            result
+            self.shifts = Some(result);
         })
     }
 }
@@ -463,7 +466,7 @@ impl Item {
 /// 多行循环移位结构体`RapidShifterLines`
 ///
 /// 通过哈希([`HashMap<UrlID, String>`])存储URL与每一行移位序列的关系
-/// 通过宏[`lazy_check!`]惰性排序
+/// 通过宏[`lazy_check`]惰性排序
 /// 效果同[`RapidShifter`]
 ///
 /// > 注意：本结构体目前不支持`merge`参数，默认行为是合并操作
@@ -514,7 +517,8 @@ impl RapidShifterLines {
     ///
     /// 通过**并发**来加速移位过程，可以同时运行多个移位迭代器
     /// 调用仅会生成所有移位序列并排序，不会返回值
-    /// 需要移位序列参见函数[`RapidShifterLines::\_\_getitem\_\_`]或[`RapidShifterLines::shifts`]
+    /// 需要移位序列参见函数[`RapidShifterLines::__getitem__`]或[`RapidShifterLines::shifts`]
+    #[inline]
     pub fn process(&mut self, py: Python<'_>) {
         // PERF: Use concurency to optimize it
         // Max threads is set to 16
