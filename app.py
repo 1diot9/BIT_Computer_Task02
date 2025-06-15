@@ -1,3 +1,4 @@
+import copy
 import io
 import os
 
@@ -92,6 +93,38 @@ def download_file():
     response.headers["Content-Type"] = "application/octet-stream"
     response.headers["Content-Disposition"] = "attachment; filename=result.txt"
     return response
+
+@app.route("/api/search", methods=["POST"])
+def search_keywords():
+    keywords = request.form.get("keywords")
+    if keywords == "":
+        return "无输入"
+    keywords_list = keywords.split(" ")
+    with open("./tmp/output.txt", "r") as f:
+        splited = []
+        while True:
+            line = f.readline()
+            if line == "":
+                break
+            re = line.strip().split()
+            splited.append(re)
+        print(splited)
+
+        no = 0
+        no_list = []
+        for inner in splited:
+            keywords = copy.deepcopy(keywords_list)
+            for word in inner:
+                for key in keywords:
+                    if key == word:
+                        keywords.remove(key)
+                        break
+                if keywords == []:
+                    print(no)
+                    no_list.append(no)
+                    break
+            no += 1
+    return render_template("search_result.html", no_list=no_list, keywords=keywords_list)
 
 
 if __name__ == "__main__":
