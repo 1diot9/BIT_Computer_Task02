@@ -1,56 +1,12 @@
-and python_version == "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform == 'win32'
-and python_version == "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform == 'win32'
-and python_version == "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform == 'win32'
-and python_version == "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform == 'win32'
-and python_version == "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform == 'win32'
-and python_version == "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform == 'win32'
-argparse~=1.4.0
-"3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform == 'win32' and python_version ==
-"3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform == 'win32' and python_version ==
-"3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform == 'win32' and python_version ==
-"3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform == 'win32' and python_version ==
-"3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform == 'win32' and python_version ==
-"3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform == 'win32' and python_version ==
-Flask~=3.0.3
-'linux' maturin~=1.8.6; sys_platform ==
-'win32' and python_version == "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform ==
-'win32' and python_version == "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform ==
-'win32' and python_version == "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform ==
-'win32' and python_version == "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform ==
-'win32' and python_version == "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform ==
-'win32' and python_version == "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform ==
-maturin~=1.8.6; sys_platform == 'linux'
-./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform == 'win32' and python_version == "3.10"
-./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform == 'win32' and python_version == "3.11"
-./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform == 'win32' and python_version == "3.12"
-./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform == 'win32' and python_version == "3.13"
-./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform == 'win32' and python_version == "3.8"
-./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform == 'win32' and python_version == "3.9"
-pyinstrument~=5.0.1
-python_version == "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform == 'win32' and
-python_version == "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform == 'win32' and
-python_version == "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform == 'win32' and
-python_version == "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform == 'win32' and
-python_version == "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform == 'win32' and
-python_version == "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform == 'win32' and
-sys_platform == 'linux' maturin~=1.8.6;
-sys_platform == 'win32' and python_version == "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl;
-sys_platform == 'win32' and python_version == "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl;
-sys_platform == 'win32' and python_version == "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl;
-sys_platform == 'win32' and python_version == "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl;
-sys_platform == 'win32' and python_version == "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl;
-sys_platform == 'win32' and python_version == "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl;
-== "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform == 'win32' and python_version
-== "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform == 'win32' and python_version
-== "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform == 'win32' and python_version
-== "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform == 'win32' and python_version
-== "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform == 'win32' and python_version
-== 'linux' maturin~=1.8.6; sys_platform
-
-== "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform == 'win32' and python_version
-== 'win32' and python_version == "3.10" ./lib/rshifter-0.2.0-cp310-cp310-win_amd64.whl; sys_platform
-== 'win32' and python_version == "3.11" ./lib/rshifter-0.2.0-cp311-cp311-win_amd64.whl; sys_platform
-== 'win32' and python_version == "3.12" ./lib/rshifter-0.2.0-cp312-cp312-win_amd64.whl; sys_platform
-== 'win32' and python_version == "3.13" ./lib/rshifter-0.2.0-cp313-cp313-win_amd64.whl; sys_platform
-== 'win32' and python_version == "3.8" ./lib/rshifter-0.2.0-cp38-cp38-win_amd64.whl; sys_platform
-== 'win32' and python_version == "3.9" ./lib/rshifter-0.2.0-cp39-cp39-win_amd64.whl; sys_platform
+A simple test string b
+b A simple test string
+B simple ttt
+C web is simple
+is simple C web
+simple C web is
+simple test string b A
+simple ttt B
+string b A simple test
+test string b A simple
+ttt B simple
+web is simple C

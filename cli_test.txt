@@ -1,0 +1,3 @@
+python .\qshifter.py -f .\web_test.txt
+python .\qshifter.py -i
+python .\qshifter.py -s

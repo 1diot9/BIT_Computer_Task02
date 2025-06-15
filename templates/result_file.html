@@ -1,25 +1,60 @@
 {% extends "base.html" %}
 {% block title %}
-	result_file
+    result_file
 {% endblock %}
 {% block content %}
+<style>
+    /* 定义CSS样式 */
+    .result-text {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .count-text {
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 20px 0;
+    }
+
+    .download-text {
+        font-size: 18px;
+        color: #3498db;
+        margin: 15px 0 10px;
+    }
+
+    .download-link {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+    .download-link:hover {
+        background-color: #2980b9;
+    }
+</style>
+
 <h2>Result</h2>
 
-    {% for i in result %}
-
-        {% for j in i %}
-
-            {{loop.index}}、{{j}}
-
-            <br>
-        {% endfor %}
+{% for i in result %}
+    {% for j in i %}
+        <p class="result-text">{{loop.index}}、{{j}}</p>
         <br>
     {% endfor %}
+    <br>
+{% endfor %}
 
-    <p>共处理：{{ count }}个句子</p>
+<p class="count-text">共处理：{{ count }}个句子</p>
 
-    <p>Download Result</p>
-    <!-- 生成下载链接，指向/download路由 -->
-    <a href="{{ url_for('download_file') }}">点击下载Result</a>
+    <br>
+<h2>Download Result</h2>
+<!-- 生成下载链接，指向/download路由 -->
+<a href="{{ url_for('download_file') }}" class="download-link">点击下载Result</a>
 
 {% endblock %}
